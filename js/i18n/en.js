@@ -18,6 +18,8 @@ export default {
   'tool.placeholder': 'Paste the suspicious message or link here…',
   'tool.check': 'Check it',
   'tool.clear': 'Clear',
+  'tool.paste': 'Paste',
+  'tool.pasteFailed': 'Your browser didn’t let us paste. Press and hold inside the box, then choose Paste.',
   'tool.tryExample': 'Try an example',
   'tool.privacy': 'Your message never leaves your device.',
   'tool.hint': 'Tip: to copy a text message, press and hold it, then choose Copy.',

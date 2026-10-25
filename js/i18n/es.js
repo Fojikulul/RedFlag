@@ -18,6 +18,8 @@ export default {
   'tool.placeholder': 'Pegue aquí el mensaje o enlace sospechoso…',
   'tool.check': 'Revisar',
   'tool.clear': 'Borrar',
+  'tool.paste': 'Pegar',
+  'tool.pasteFailed': 'Su navegador no nos dejó pegar. Mantenga presionado dentro del cuadro y elija Pegar.',
   'tool.tryExample': 'Probar un ejemplo',
   'tool.privacy': 'Su mensaje nunca sale de su dispositivo.',
   'tool.hint': 'Consejo: para copiar un mensaje de texto, manténgalo presionado y elija Copiar.',

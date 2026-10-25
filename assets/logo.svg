@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 120" role="img" aria-labelledby="title">
+  <title id="title">RedFlag</title>
+  <rect width="400" height="120" rx="20" fill="#0B0B0B"/>
+  <text x="44" y="82" font-family="Manrope, system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="64" font-weight="800" letter-spacing="-2.5" fill="#F2EFEA">redflag<tspan fill="#E5251B">.</tspan></text>
+  <path d="M232 36 C243 32 254 41 271 35 L271 51 C254 57 243 48 232 52 Z" fill="#E5251B"/>
+</svg>
