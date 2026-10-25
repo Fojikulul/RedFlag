@@ -1,0 +1,46 @@
+export default [
+  {
+    id: 'secrecy.keep_secret',
+    category: 'secrecy',
+    severity: 'high',
+    weight: 25,
+    patterns: {
+      en: [
+        '(don\'t|do not) tell (anyone|anybody|mom|dad|your|the bank|my parents)',
+        'keep (this|it) (a )?(secret|confidential|between us|private|quiet)',
+        'between (you and me|us)',
+        '(don\'t|do not) hang up',
+        'stay on the line',
+        '(don\'t|do not) (contact|call|talk to) (your )?(bank|family|police|anyone)',
+        'confidential (matter|case|investigation)',
+      ],
+      uk: [
+        'нікому не (кажі~|каж~|розповіда~|говорі~|говори)',
+        'не (кажі~|кажи|говори) (мамі|татові|батькам|нікому)',
+        'трима~ (це )?в таємниці',
+        'між нами',
+        'не клад~ (трубку|слухавку)',
+        'не (телефонуй~|дзвони~) (в банк|до банку|рідним|в поліцію)',
+        'це конфіденційн~',
+      ],
+      ru: [
+        'никому не (говори~|рассказыва~)',
+        'не (говори|говорите) (маме|папе|родителям|никому)',
+        'держи~ (это )?в (тайне|секрете)',
+        'между нами',
+        'не клад~ трубку',
+        'не звони~ (в банк|родным|в полицию)',
+        'это конфиденциальн~',
+      ],
+      es: [
+        'no (le )?(digas|diga|cuentes|cuente) (a nadie|nada|a mamá|a papá|a tus padres|a su familia)',
+        'mant(é|e)nlo en secreto',
+        'manténgalo en secreto',
+        'entre (tú y yo|nosotros)',
+        'no cuelgue',
+        'no (llame|hable) (a su banco|al banco|con nadie|a la policía)',
+        'es confidencial',
+      ],
+    },
+  },
+];
