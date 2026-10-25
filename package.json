@@ -14,7 +14,7 @@
     "node": ">=20"
   },
   "scripts": {
-    "test": "node --test tests/",
+    "test": "node --test",
     "evaluate": "node scripts/evaluate.js tests/fixtures/scams.json tests/fixtures/safe.json",
     "grade": "node scripts/grade.js"
   },
