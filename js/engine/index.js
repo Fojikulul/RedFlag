@@ -5,6 +5,7 @@ import { findMatches } from './patterns.js';
 import { HOMOGLYPH_RULE, RULES } from './rules/index.js';
 import { scoreFlags } from './scoring.js';
 
+export { CATEGORIES } from './rules/index.js';
 export { THRESHOLDS } from './scoring.js';
 
 export const VERSION = '1.0.0';

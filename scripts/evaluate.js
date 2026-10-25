@@ -6,25 +6,8 @@
 //
 // Sample format: [{ "id", "text", "lang", "expected": "red|yellow|green", "source", "notes" }]
 
-import { readFileSync } from 'node:fs';
-
 import { analyze } from '../js/engine/index.js';
-
-const VERDICTS = ['red', 'yellow', 'green'];
-
-function loadSamples(paths) {
-  const samples = [];
-  for (const path of paths) {
-    const rows = JSON.parse(readFileSync(path, 'utf8'));
-    rows.forEach((row, index) => {
-      if (typeof row.text !== 'string' || !VERDICTS.includes(row.expected)) {
-        throw new Error(`${path} row ${index}: needs "text" and an "expected" of red, yellow or green`);
-      }
-      samples.push({ id: row.id ?? `${path}#${index}`, lang: row.lang ?? 'unknown', ...row });
-    });
-  }
-  return samples;
-}
+import { loadSamples, percent, rate } from './lib/samples.js';
 
 function evaluate(samples) {
   return samples.map((sample) => {
@@ -60,14 +43,6 @@ function summarize(rows) {
     falseAlarms,
     falsePositiveRate: rate(falseAlarms, safe.length),
   };
-}
-
-function rate(part, whole) {
-  return whole === 0 ? null : part / whole;
-}
-
-function percent(value) {
-  return value === null ? '—' : `${(value * 100).toFixed(1)}%`;
 }
 
 function groupBy(rows, keyOf) {

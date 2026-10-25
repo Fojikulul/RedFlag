@@ -23,6 +23,11 @@ export const RULE_DEFINITIONS = [
 
 export const RULES = RULE_DEFINITIONS.map(compileRule);
 
+export const CATEGORIES = [
+  'urgency', 'payment', 'impersonation', 'credentials', 'prize',
+  'family-emergency', 'secrecy', 'investment-romance', 'job', 'links',
+];
+
 // Flagged by normalize() rather than a pattern, but explained like any rule.
 export const HOMOGLYPH_RULE = {
   id: 'impersonation.homoglyph',

@@ -3,13 +3,8 @@ import { test } from 'node:test';
 
 import { analyze } from '../js/engine/index.js';
 import { LINK_RULES } from '../js/engine/links.js';
-import { HOMOGLYPH_RULE, RULE_DEFINITIONS } from '../js/engine/rules/index.js';
+import { CATEGORIES, HOMOGLYPH_RULE, RULE_DEFINITIONS } from '../js/engine/rules/index.js';
 import { LANGUAGES, pickLanguage, STRINGS, t } from '../js/i18n/index.js';
-
-const CATEGORIES = [
-  'urgency', 'payment', 'impersonation', 'credentials', 'prize',
-  'family-emergency', 'secrecy', 'investment-romance', 'job', 'links',
-];
 
 const ENGINE_KEYS = [
   ...RULE_DEFINITIONS.map((rule) => `explain.${rule.id}`),
