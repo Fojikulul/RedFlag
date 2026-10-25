@@ -1,0 +1,24 @@
+{
+  "name": "redflag",
+  "version": "1.0.0",
+  "description": "Free, private scam checker for texts, emails and links in English, Ukrainian, Russian and Spanish.",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "author": "Fojikulul",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Fojikulul/RedFlag.git"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "node --test tests/",
+    "evaluate": "node scripts/evaluate.js tests/fixtures/scams.json tests/fixtures/safe.json",
+    "grade": "node scripts/grade.js"
+  },
+  "devDependencies": {
+    "@anthropic-ai/sdk": "^1.3.0"
+  }
+}
