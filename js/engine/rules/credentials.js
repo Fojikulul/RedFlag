@@ -8,10 +8,14 @@ export default [
     weight: 30,
     skipIfNegated: true,
     patterns: {
+      // "Send me the code for the wifi" is harmless, so a bare "code" needs
+      // something that ties it to an account or a text you just received.
       en: [
-        '(send|share|tell|give|read|forward|text) (me |us )?(back )?(the |your |that |this )?(\\d-digit |six-digit )?(verification |security |confirmation |one-time |login |sms |whatsapp |card )?(codes?|pin)',
+        '(send|share|tell|give|read|forward|text) (me |us )?(back )?(the |your |that |this )?(\\d-digit |six-digit )?(verification|security|confirmation|one-time|login|sms|whatsapp|card|otp) (codes?|pin)',
+        '(send|share|tell|give|read|forward|text) (me |us )?(back )?(the |your |that |this )?(\\d-digit|six-digit) (codes?|pin)',
+        '(send|share|tell|give|read|forward|text) _ codes? (on|from) (the back|the card|the text|the sms|your phone)',
+        'codes? (we|i|they) (just )?sent( you)?',
         'reply with (the |your )?(\\d-digit )?code',
-        'what (is|was) the code',
       ],
       uk: [
         '(надішл~|продиктуй~|скажі?ть|повідом~|назві?ть|перешл~) (мені |нам )?(код~|смс|пароль|cvv|пін)',

@@ -1,0 +1,30 @@
+[
+  { "id": "en-s01", "lang": "en", "expected": "green", "source": "example", "notes": "", "text": "Running 10 min late, see you soon" },
+  { "id": "en-s02", "lang": "en", "expected": "green", "source": "example", "notes": "real shipping notice", "text": "Your Amazon order has shipped and will arrive Thursday." },
+  { "id": "en-s03", "lang": "en", "expected": "green", "source": "example", "notes": "appointment", "text": "Reminder: you have an appointment with Dr. Patel on Tuesday at 2:30 PM. Reply C to confirm." },
+  { "id": "en-s04", "lang": "en", "expected": "green", "source": "example", "notes": "real OTP", "text": "Your verification code is 482913. Don't share this code with anyone." },
+  { "id": "en-s05", "lang": "en", "expected": "green", "source": "example", "notes": "real bank alert", "text": "Chase: A $42.17 purchase at Safeway was made on your card ending 1234." },
+  { "id": "en-s06", "lang": "en", "expected": "green", "source": "example", "notes": "family", "text": "Can you pick up milk and bread on the way home? Grandma is coming for dinner." },
+  { "id": "en-s07", "lang": "en", "expected": "green", "source": "example", "notes": "pharmacy", "text": "Your prescription is ready for pickup at CVS Pharmacy on Main St." },
+  { "id": "en-s08", "lang": "en", "expected": "green", "source": "example", "notes": "harmless code request", "text": "Can you send me the code for the wifi?" },
+  { "id": "en-s09", "lang": "en", "expected": "green", "source": "example", "notes": "everyday work from home", "text": "I'll work from home tomorrow, the plumber is coming." },
+  { "id": "en-s10", "lang": "en", "expected": "green", "source": "example", "notes": "real delivery", "text": "Your UPS package was delivered to the front door." },
+
+  { "id": "uk-s01", "lang": "uk", "expected": "green", "source": "example", "notes": "", "text": "Привіт! Вечеря в неділю о шостій, приходьте всі разом. Я спечу пиріг." },
+  { "id": "uk-s02", "lang": "uk", "expected": "green", "source": "example", "notes": "справжня доставка", "text": "Нова Пошта: ваше відправлення прибуло у відділення №12. Отримати можна до 30 жовтня." },
+  { "id": "uk-s03", "lang": "uk", "expected": "green", "source": "example", "notes": "справжній код", "text": "Код для входу: 5521. Нікому не повідомляйте цей код." },
+  { "id": "uk-s04", "lang": "uk", "expected": "green", "source": "example", "notes": "", "text": "Мамо, я вже вдома. Завтра зателефоную після роботи." },
+  { "id": "uk-s05", "lang": "uk", "expected": "green", "source": "example", "notes": "лікар", "text": "Нагадуємо про ваш запис до лікаря у вівторок о 10:00." },
+
+  { "id": "ru-s01", "lang": "ru", "expected": "green", "source": "example", "notes": "", "text": "Мам, я уже дома. Завтра заеду к вам после работы, купить что-нибудь?" },
+  { "id": "ru-s02", "lang": "ru", "expected": "green", "source": "example", "notes": "настоящий код", "text": "Код подтверждения: 7734. Никому не сообщайте этот код." },
+  { "id": "ru-s03", "lang": "ru", "expected": "green", "source": "example", "notes": "", "text": "С днём рождения, дорогая! Желаю здоровья и счастья. Целую." },
+  { "id": "ru-s04", "lang": "ru", "expected": "green", "source": "example", "notes": "аптека", "text": "Ваш заказ в аптеке готов к выдаче. Ждём вас до 20:00." },
+  { "id": "ru-s05", "lang": "ru", "expected": "green", "source": "example", "notes": "", "text": "Встречаемся в субботу в парке в два часа. Возьми детей." },
+
+  { "id": "es-s01", "lang": "es", "expected": "green", "source": "example", "notes": "", "text": "Hola mamá, ya llegué. Mañana te llamo para lo de la cena del domingo." },
+  { "id": "es-s02", "lang": "es", "expected": "green", "source": "example", "notes": "cita", "text": "Recordatorio: tiene una cita con el dentista el jueves a las 3:00 PM." },
+  { "id": "es-s03", "lang": "es", "expected": "green", "source": "example", "notes": "código real", "text": "Su código de verificación es 990124. No comparta este código con nadie." },
+  { "id": "es-s04", "lang": "es", "expected": "green", "source": "example", "notes": "", "text": "¿Puedes traer pan y leche cuando vengas? Los niños ya comieron." },
+  { "id": "es-s05", "lang": "es", "expected": "green", "source": "example", "notes": "pedido", "text": "Su pedido de Mercado Libre llegará mañana entre las 9 y las 14 horas." }
+]

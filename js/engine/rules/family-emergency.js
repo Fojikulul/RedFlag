@@ -41,10 +41,12 @@ export default [
     },
   },
   {
+    // "Hi mum, new number" is the opener of a whole family of scams, so it
+    // is worth a yellow on its own.
     id: 'family.new_number',
     category: 'family-emergency',
     severity: 'medium',
-    weight: 20,
+    weight: 25,
     patterns: {
       en: [
         '(this is )?my new (phone )?number',

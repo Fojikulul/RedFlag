@@ -101,7 +101,7 @@ export default [
     weight: 25,
     patterns: {
       en: [
-        '(pay|send) (a )?(small |one-time )?(fee|deposit|tax|charge) (to|before|in order to) (receive|claim|release|unlock|get)',
+        '(pay|send) _ (fee|deposit|tax|charge) (to|before|in order to) (receive|claim|release|unlock|get)',
         '(processing|release|redelivery|customs|clearance|unlock) fee',
         '(small|unpaid|outstanding) (fee|toll|shipping fee)',
         'unpaid toll',
@@ -117,7 +117,7 @@ export default [
         'таможенн~ (сбор|пошлин~|платеж~)',
       ],
       es: [
-        'pag(ar|ue|a) (una )?(pequeña )?(tarifa|comisión|cuota) (para|antes de) (recibir|reclamar|liberar)',
+        'pag(ar|ue|a) _ (tarifa|comisión|cuota) _ (para|antes de) (recibir|reclamar|liberar)',
         'tarifa de (reenvío|procesamiento|liberación|aduana)',
         'peaje (pendiente|impago|no pagado)',
       ],

@@ -7,6 +7,9 @@ const BOOSTS = [
   { categories: ['impersonation', 'credentials'], bonus: 15 },
   { categories: ['family-emergency', 'secrecy'], bonus: 15 },
   { categories: ['family-emergency', 'payment'], bonus: 10 },
+  { categories: ['investment-romance', 'payment'], bonus: 15 },
+  { categories: ['prize', 'payment'], bonus: 15 },
+  { categories: ['job', 'payment'], bonus: 15 },
   { categories: ['links', 'credentials'], bonus: 10 },
   { categories: ['links', 'urgency'], bonus: 10 },
 ];
