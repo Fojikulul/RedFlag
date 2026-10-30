@@ -163,6 +163,7 @@ export default [
         '(processing|release|redelivery|customs|clearance|unlock) fee',
         '(small|unpaid|outstanding) (fee|toll|shipping fee)',
         'unpaid toll',
+        '(tariff|customs (fee|duty|charge)|duty|import fee) (must|needs to|has to) be paid',
       ],
       uk: [
         'сплат~ (комісі~|збір|мито)',
@@ -192,6 +193,9 @@ export default [
         'payment (is )?(required|overdue|due immediately|must be made)',
         'outstanding (balance|debt|amount)',
         'you owe',
+        'unless you pay',
+        'settle (the |your )?(unpaid |outstanding )?(balance|fine|violation|ticket|debt)',
+        'unpaid (balance|fine|ticket)',
       ],
       uk: [
         'сплат~ (зараз|негайно|сьогодні|штраф|борг|заборгованість|\\$ ?\\d[\\d,.]*|\\d[\\d,.]* ?(грн|гривень|\\$|доларів))',

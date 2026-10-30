@@ -91,6 +91,40 @@ export default [
     },
   },
   {
+    // Fake fraud alerts end with "Was this you?" so you reply or call back.
+    id: 'urgency.verify_activity',
+    category: 'urgency',
+    severity: 'medium',
+    weight: 20,
+    patterns: {
+      en: [
+        'was this you',
+        'if this was(n\'t| not) you',
+        'reply (yes|no|y|n|1|2) (or|to) _ (no|n|cancel|confirm|stop|yes)',
+        'did you (make|authorize|request|approve) (this|a|the)',
+      ],
+      uk: ['це були ви', 'якщо це були не ви', 'дайте відповідь (так|ні)'],
+      ru: ['это были вы', 'если это были не вы', 'ответьте (да|нет)'],
+      es: ['fue usted', 'si no fue usted', 'responda (sí|si|no)'],
+    },
+  },
+  {
+    // A charge or renewal you never made, to scare you into calling.
+    id: 'urgency.unexpected_charge',
+    category: 'urgency',
+    severity: 'medium',
+    weight: 20,
+    patterns: {
+      en: [
+        '(purchase|payment|charge|order|transfer|withdrawal) _ (has been|was|is) (authorized|approved|placed|processed|scheduled)',
+        'did(n\'t| not) (make|authorize|request|recognize) (this|these|the)',
+      ],
+      uk: ['(списано|знято) \\d', 'підписк~ (продовжено|поновлено)'],
+      ru: ['(списано|снято) \\d', 'подписк~ (продлена|продлён~)'],
+      es: ['(ha sido|fue) (renovad~|cobrad~)', 'no (autorizó|reconoce) (este|esta)'],
+    },
+  },
+  {
     id: 'urgency.legal_threat',
     category: 'urgency',
     severity: 'high',
@@ -107,6 +141,7 @@ export default [
         'jail time',
         'deport~',
         'court (case|summons|order|date)',
+        'traffic (violation|ticket|fine|citation)',
         'police (will|are coming|officers will)',
       ],
       uk: [

@@ -282,4 +282,11 @@ export default {
   'result.doFirst': 'Haga esto ahora',
   'result.readAloud': 'Léamelo en voz alta',
   'result.stopReading': 'Dejar de leer',
+
+  'explain.urgency.verify_activity': 'Pregunta «¿Fue usted?» sobre un pago o un inicio de sesión. Los estafadores lo envían para que usted responda o llame. Revíselo en la app de su banco o llamando al número de su tarjeta.',
+  'explain.urgency.unexpected_charge': 'Menciona un cargo o transferencia que usted no hizo. Busca asustarle para que llame o toque un enlace. Revise su cuenta usted mismo.',
+  'explain.impersonation.callback': 'Le da un número para llamar. En las alertas falsas, ese número lleva directo al estafador. Use el número de su tarjeta o del sitio oficial de la empresa.',
+  'explain.impersonation.disguised_word': 'Una palabra está escrita con números en vez de letras (como «j0b»). Los estafadores lo hacen para evitar los filtros de spam.',
+  'explain.prize.contest_vote': 'Le pide votar en un concurso. Estos enlaces suelen robar la cuenta con la que usted inicia sesión para votar.',
+  'explain.romance.wrong_number': 'Un desconocido escribe como si le conociera, o como si se hubiera equivocado de número. Así empiezan muchas estafas románticas y de inversión.',
 };

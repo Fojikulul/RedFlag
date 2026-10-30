@@ -11,7 +11,8 @@ export default [
         '(i\'m|i am|i was|i got) (in jail|in the hospital|arrested|in trouble|in an accident|stuck)',
         'i\'ve been arrested',
         'need (money|cash|\\$ ?\\d[\\d,]*) (for|to pay) (bail|a lawyer|the lawyer|the hospital|the fine)',
-        'bail (money)?',
+        'bail money',
+        '(pay|post) (my |the |his |her )?bail',
       ],
       uk: [
         '(бабусю|дідусю|мамо|мам|тату|тато),? це я',

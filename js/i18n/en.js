@@ -282,4 +282,11 @@ export default {
   'result.doFirst': 'Do this now',
   'result.readAloud': 'Read it to me',
   'result.stopReading': 'Stop reading',
+
+  'explain.urgency.verify_activity': 'It asks "Was this you?" about a payment or login. Scammers send these so you reply or call them. Check in your bank’s app or by calling the number on your card.',
+  'explain.urgency.unexpected_charge': 'It mentions a charge or transfer you didn’t make. This is meant to worry you into calling or clicking. Check your account yourself.',
+  'explain.impersonation.callback': 'It gives a phone number to call. In fake alerts, that number goes straight to the scammer. Use the number on your card or the company’s official website.',
+  'explain.impersonation.disguised_word': 'A word is spelled with numbers instead of letters (like “j0b”). Scammers do this to get past spam filters.',
+  'explain.prize.contest_vote': 'It asks you to vote in a contest. These links often take over the account you use to log in and vote.',
+  'explain.romance.wrong_number': 'A stranger writes as if they know you, or as if they texted the wrong number. This is how many romance and investment scams begin.',
 };

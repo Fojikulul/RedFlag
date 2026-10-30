@@ -1,3 +1,17 @@
+const DISGUISABLE_WORDS = [
+  'job', 'account', 'login', 'password', 'bitcoin', 'crypto', 'paypal', 'amazon', 'bank',
+  'verify', 'money', 'free', 'cash', 'winner', 'prize', 'gift', 'payment', 'wallet',
+  'refund', 'security', 'support', 'offer', 'bonus', 'apple', 'netflix',
+];
+const DIGIT_FOR = { o: '0', i: '1', l: '1', e: '3', s: '5', b: '8' };
+
+// "job" becomes a pattern for j0b but not job: at least one letter must be
+// a digit look-alike.
+function disguised(word) {
+  const body = [...word].map((letter) => (DIGIT_FOR[letter] ? `[${letter}${DIGIT_FOR[letter]}]` : letter)).join('');
+  return `(?=\\p{L}*\\d)${body}`;
+}
+
 // Brand and agency names on their own are weak signals: real companies text
 // people too. They mostly matter in combination with a request for codes,
 // money or personal details (see the boosts in scoring.js).
@@ -8,13 +22,15 @@ export default [
     severity: 'high',
     weight: 25,
     patterns: {
+      // An agency's own .gov address is where people should go, so it
+      // doesn't count as someone claiming to be the agency.
       en: [
-        'irs',
+        'irs(?!\\.gov)',
         'internal revenue service',
         'social security (administration|office|department)',
-        'ssa',
-        'medicare',
-        'uscis',
+        'ssa(?!\\.gov)',
+        'medicare(?!\\.gov)',
+        'uscis(?!\\.gov)',
         'immigration (office|services|department|officer)',
         'department of (homeland security|justice|the treasury|treasury)',
         'fbi',
@@ -48,6 +64,39 @@ export default [
         'hacienda',
         'embajada',
       ],
+    },
+  },
+  {
+    // "Call us at 1-800..." is how fake alerts get you on the phone with them.
+    id: 'impersonation.callback',
+    category: 'impersonation',
+    severity: 'medium',
+    weight: 20,
+    patterns: {
+      en: [
+        'call (us|me|now|our|the|support|immediately) _ (on|at|:) ?\\+?[\\d(]',
+        'call (our )?(cancellation|billing|support|security|fraud|refund) (team|department|line|center)',
+        'contact _ (team|support|department) ?: ?\\+?[\\d(]',
+        'call support (immediately|now|right away)',
+      ],
+      uk: ['зателефонуй~ (нам )?за номером', 'передзвоні~ (нам )?за номером'],
+      ru: ['позвони~ (нам )?по номеру', 'перезвони~ (нам )?по номеру'],
+      es: ['llám~ (al|a nuestro) (número|equipo)', 'comuníquese al \\+?\\d'],
+    },
+  },
+  {
+    // "j0B", "acc0unt", "pa55word": numbers swapped in to dodge filters.
+    // Limited to words scammers disguise, so order numbers like "XK5LM"
+    // don't trip it.
+    id: 'impersonation.disguised_word',
+    category: 'impersonation',
+    severity: 'medium',
+    weight: 25,
+    patterns: {
+      en: DISGUISABLE_WORDS.map(disguised),
+      uk: [],
+      ru: [],
+      es: [],
     },
   },
   {
@@ -93,6 +142,9 @@ export default [
         'navy federal',
         'td bank',
         'pnc',
+        'bofa',
+        'us bank',
+        'citi',
       ],
       uk: ['приватбанк~', 'монобанк~', 'ощадбанк~', 'райффайзен~'],
       ru: ['сбербанк~', 'сбер', 'тинькофф', 'втб'],
@@ -125,6 +177,11 @@ export default [
         'redeliver~',
         'incomplete (address|delivery information|shipping address)',
         '(address|delivery information) (is )?incomplete',
+        'issues? (releasing|delivering) your (package|parcel|order)',
+        'update (your )?(shipping|delivery) (directions|address|details|information)',
+        'trying to find your (house|address|home)',
+        'stuck in customs',
+        'arrived at the warehouse',
       ],
       uk: [
         '(посилк~|відправлен~) _ (затриман~|не (може бути )?доставлен~|на утриманні)',
@@ -180,6 +237,13 @@ export default [
         'your (computer|device|pc|phone|iphone) (is|has been) (infected|hacked|compromised)',
         'virus (detected|found)',
         '(detected|found) (a )?virus',
+        'windows defender',
+        '(critical|security) (system )?alert',
+        '(network|security|data) breach detected',
+        'your (computer|device|pc|mac|phone) (has been|is) (locked|blocked|infected|hacked)( up)?',
+        'your ip address',
+        '(identity theft|trojan|spyware) virus',
+        '(contact|call) (microsoft|apple|windows) (support|security)',
       ],
       uk: [
         'ваш~? (комп\'ютер|пристрій|телефон) (заражен~|зламан~)',
