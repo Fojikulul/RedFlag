@@ -69,16 +69,43 @@ Real scam messages are the most useful thing anyone can contribute. Add them to 
 
 **Remove personal details first.** Replace names, phone numbers, emails, addresses and account numbers with placeholders like `[NAME]` and `[PHONE]`.
 
+## AI second opinion (optional)
+
+The rules catch common scams but can miss new wording. When `aiEndpoint` is set in `js/config.js`, every result gets an **Ask the AI** button that sends that one message to a small Cloudflare Worker in `server/`, which asks the Claude API and returns a verdict and a plain explanation in the page's language.
+
+The API key lives only on the Worker as a secret. It is never in the page, the repo or the browser.
+
+```bash
+cd server
+npm install
+cp .dev.vars.example .dev.vars   # then put your key in .dev.vars (git ignores it)
+npm run dev                      # Worker on http://localhost:8787
+```
+
+Set `aiEndpoint: 'http://localhost:8787'` in `js/config.js` to try it locally. To deploy:
+
+```bash
+npx wrangler secret put ANTHROPIC_API_KEY
+npm run deploy
+```
+
+Then set `aiEndpoint` to the deployed URL and add your site to `ALLOWED_ORIGINS` in `server/wrangler.toml`. The Worker only answers requests from those origins, allows 10 checks a minute per visitor, and never logs message text. Set a monthly spending limit in the Anthropic Console as well. `MODEL` in `wrangler.toml` switches to a cheaper model.
+
+## Partnering with a sheriff's office or police department
+
+Set `localAgency` in `js/config.js` to a name and non-emergency phone number, and the "Where to report it" section shows a button to call them.
+
 ## Development
 
-`scripts/grade.js` is an optional developer tool. It sends samples to the Claude API for a second opinion and lists the scams the rules missed, which is where new rules come from. It needs `npm install` and an `ANTHROPIC_API_KEY` in your environment, and it asks before sending anything. The website itself never calls any API.
+`scripts/grade.js` is an optional developer tool. It sends samples to the Claude API for a second opinion and lists the scams the rules missed, which is where new rules come from. It needs `npm install` and an `ANTHROPIC_API_KEY` in your environment, and it asks before sending anything.
 
 ## Privacy
 
-- Messages are checked in the browser and never leave the device.
-- The only thing stored is your language choice, in `localStorage`.
+- Messages are checked in the browser. Nothing is sent unless the visitor presses **Ask the AI**, and then only that one message, which the Worker does not store.
+- The only things stored are the language and text-size settings, in `localStorage`.
 - Fonts and the animation library are served from this site, not from third parties.
 - There is a spot in `index.html` for one privacy-friendly page-view counter. Nothing else is tracked.
+- Draft [Privacy](privacy.html) and [Terms](terms.html) pages describe this in plain words. Have them reviewed before a formal partnership.
 
 ## History
 
