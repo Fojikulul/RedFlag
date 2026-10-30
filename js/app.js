@@ -95,6 +95,7 @@ function setLanguage(lang) {
 
   renderStats();
   renderExamples();
+  renderQuiz();
   renderLocalAgency();
   updateClock();
   if (state.checkedText !== null) renderResult(state.checkedText, { announce: false });
@@ -170,6 +171,8 @@ function renderResult(text, { announce = true } = {}) {
     body.append(section(t('result.flagsTitle', lang), reasons));
   }
 
+  if (result.links.length > 0) body.append(section(t('result.linksTitle', lang), linkList(result.links)));
+
   const advice = el('ol', 'advice');
   for (const key of result.adviceKeys) advice.append(el('li', '', t(key, lang)));
   body.append(section(t('result.adviceTitle', lang), advice));
@@ -191,6 +194,91 @@ function renderResult(text, { announce = true } = {}) {
     elements.announcer.textContent = `${verdictText}. ${summaryText}`;
     effects.revealResult(elements.result);
   }
+}
+
+// Each web address in the message, and what is wrong with it in plain words.
+function linkList(links) {
+  const list = el('ul', 'link-list');
+  for (const link of links) {
+    const item = el('li', 'link-item');
+    item.append(el('p', 'link-domain', link.domain), el('p', 'link-url', link.url));
+
+    if (link.issues.length === 0) {
+      item.append(el('p', 'link-clean', t('result.linkClean', state.lang)));
+    } else {
+      const issues = el('ul', 'link-issues');
+      for (const issue of link.issues) issues.append(el('li', '', t(`explain.links.${issue}`, state.lang)));
+      item.append(issues);
+    }
+    list.append(item);
+  }
+  return list;
+}
+
+// "Can you spot the scam?": four messages, answer, see why.
+const QUIZ_ANSWERS = ['scam', 'safe', 'scam', 'safe'];
+const quiz = { index: 0, score: 0, answer: null };
+
+function renderQuiz() {
+  const { lang } = state;
+  const card = document.getElementById('quiz-card');
+  const total = QUIZ_ANSWERS.length;
+
+  if (quiz.index >= total) {
+    const again = el('button', 'btn btn-primary', t('quiz.again', lang));
+    again.type = 'button';
+    again.addEventListener('click', () => {
+      Object.assign(quiz, { index: 0, score: 0, answer: null });
+      renderQuiz();
+    });
+    card.replaceChildren(
+      el('p', 'quiz-score', t('quiz.score', lang, { score: quiz.score, total })),
+      el('p', 'quiz-note', t('quiz.scoreNote', lang)),
+      again,
+    );
+    return;
+  }
+
+  const n = quiz.index + 1;
+  const correct = QUIZ_ANSWERS[quiz.index];
+  const children = [
+    el('p', 'quiz-progress', t('quiz.progress', lang, { n, total })),
+    el('div', 'message-view quiz-message', t(`quiz.${n}.text`, lang)),
+  ];
+
+  if (quiz.answer === null) {
+    children.push(el('p', 'quiz-question', t('quiz.question', lang)));
+    const choices = el('div', 'quiz-choices');
+    for (const choice of ['scam', 'safe']) {
+      const button = el('button', 'btn btn-ghost btn-large', t(`quiz.${choice}`, lang));
+      button.type = 'button';
+      button.addEventListener('click', () => {
+        quiz.answer = choice;
+        if (choice === correct) quiz.score++;
+        renderQuiz();
+        card.querySelector('.quiz-next')?.focus({ preventScroll: true });
+      });
+      choices.append(button);
+    }
+    children.push(choices);
+  } else {
+    const right = quiz.answer === correct;
+    const feedback = el('div', `quiz-feedback ${right ? 'is-right' : 'is-wrong'}`);
+    feedback.append(
+      el('p', 'quiz-verdict', `${t(right ? 'quiz.right' : 'quiz.wrong', lang)} ${t(correct === 'scam' ? 'quiz.isScam' : 'quiz.isSafe', lang)}`),
+      el('p', '', t(`quiz.${n}.why`, lang)),
+    );
+    const next = el('button', 'btn btn-primary quiz-next', t(n === total ? 'quiz.finish' : 'quiz.next', lang));
+    next.type = 'button';
+    next.addEventListener('click', () => {
+      quiz.index++;
+      quiz.answer = null;
+      renderQuiz();
+    });
+    children.push(feedback, next);
+  }
+
+  card.replaceChildren(...children);
 }
 
 // AI second opinion. Opt-in per message, because it is the one time the
@@ -276,7 +364,7 @@ async function askAi() {
   }
 }
 
-async function check() {
+function check() {
   const text = elements.message.value;
   if (text.trim() === '') {
     elements.error.hidden = false;
@@ -289,13 +377,20 @@ async function check() {
   state.checkedText = text;
   state.ai = null;
 
-  await effects.scan(elements.field);
+  effects.scan(elements.field);
   renderResult(text);
 
   elements.result.tabIndex = -1;
   elements.result.focus({ preventScroll: true });
-  // Jump rather than glide: less motion is easier to follow.
-  elements.result.scrollIntoView({ block: 'start' });
+  scrollPageTo(elements.result);
+}
+
+// Scrolls the window itself. scrollIntoView can also scroll any clipped
+// ancestor, which leaves content stuck where the visitor can't scroll back.
+function scrollPageTo(element) {
+  const header = document.querySelector('.site-header').offsetHeight;
+  const top = element.getBoundingClientRect().top + window.scrollY - header - 12;
+  window.scrollTo({ top: Math.max(0, top), behavior: 'instant' });
 }
 
 function clear() {
@@ -312,7 +407,7 @@ function clear() {
 
 function focusMessage() {
   elements.message.focus({ preventScroll: true });
-  document.getElementById('checker').scrollIntoView({ block: 'start' });
+  scrollPageTo(document.getElementById('checker'));
 }
 
 // Reading the clipboard happens on the device, like the check itself. Some
@@ -508,6 +603,7 @@ function init() {
   });
   elements.footerFlag.addEventListener('click', () => effects.waveFlag(elements.flagWave));
 
+  document.getElementById('year').textContent = String(new Date().getFullYear());
   setUpLanguageMenu();
   setUpLinks();
   drawArt();
@@ -522,7 +618,7 @@ function init() {
   // After the first render, so counters and reveals see the translated text.
   effects.setUpReveals();
   effects.setUpCounters();
-  effects.setUpRadar();
+  effects.setUpStepArt();
   effects.setUpWordmark(elements.footerFlag);
 
   setInterval(updateClock, 30_000);

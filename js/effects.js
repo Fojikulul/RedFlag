@@ -15,14 +15,51 @@ function richEffects() {
   return enabled && largeScreen.matches;
 }
 
+// Scroll reveals hide things until they come into view, which is only safe
+// if the browser really reports visibility. Some embedded views and power
+// savers never do, so check once that an observer fires before hiding
+// anything. Without that, content would stay invisible for good.
+let observerCheck;
+function observerWorks() {
+  observerCheck ??= new Promise((resolve) => {
+    const observer = new IntersectionObserver(() => {
+      observer.disconnect();
+      resolve(true);
+    });
+    observer.observe(document.body);
+    setTimeout(() => {
+      observer.disconnect();
+      resolve(false);
+    }, 600);
+  });
+  return observerCheck;
+}
+
 // Browsers pause animations in background tabs and on some power-saving
 // phones. Anything that starts hidden must never get stuck that way, so each
 // entrance is forced to its end state shortly after it should have finished.
 function enter(targets, keyframes, options = {}) {
   const animation = motion.animate(targets, keyframes, options);
   const delay = typeof options.delay === 'number' ? options.delay : 0.6;
-  setTimeout(() => animation.complete(), ((options.duration ?? 0.4) + delay + 0.5) * 1000);
-  return animation;
+  const deadline = ((options.duration ?? 0.4) + delay + 0.5) * 1000;
+
+  // Resolves when the animation ends or the deadline passes, whichever is
+  // first. Never wait on an animation's own promise alone.
+  return new Promise((resolve) => {
+    let done = false;
+    const finish = () => {
+      if (done) return;
+      done = true;
+      try {
+        animation.complete();
+      } catch {
+        // Already finished or cancelled.
+      }
+      resolve();
+    };
+    animation.then?.(finish, finish);
+    setTimeout(finish, deadline);
+  });
 }
 
 export function popIn(element) {
@@ -32,16 +69,18 @@ export function popIn(element) {
 
 /**
  * A beam passes once over the message box, so pressing "Check it" visibly
- * does something. Resolves when the result can be shown.
+ * does something. Purely decorative: the check never waits for it, and the
+ * beam removes itself on a timer rather than trusting the animation to end.
  */
 export function scan(field) {
-  if (!enabled) return Promise.resolve();
+  if (!enabled) return;
+  field.querySelectorAll('.scan-beam').forEach((old) => old.remove());
+
   const beam = document.createElement('div');
   beam.className = 'scan-beam';
   field.append(beam);
-
-  const animation = enter(beam, { x: ['-100%', '400%'], opacity: [1, 1, 0] }, { duration: 0.55, ease: 'easeInOut' });
-  return animation.then(() => beam.remove(), () => beam.remove());
+  motion.animate(beam, { x: ['-100%', '400%'], opacity: [1, 1, 0] }, { duration: 0.55, ease: 'easeInOut' });
+  setTimeout(() => beam.remove(), 700);
 }
 
 export function revealResult(result) {
@@ -92,8 +131,8 @@ export function setUpAccordions(selector) {
 }
 
 /** Fades groups of cards in as they scroll into view. Headings never hide. */
-export function setUpReveals() {
-  if (!richEffects()) return;
+export async function setUpReveals() {
+  if (!richEffects() || !(await observerWorks())) return;
   const { inView, stagger } = motion;
 
   for (const group of document.querySelectorAll('[data-reveal]')) {
@@ -101,15 +140,16 @@ export function setUpReveals() {
     const targets = items.length > 0 ? items : [group];
     for (const target of targets) target.style.opacity = '0';
 
-    inView(group, () => {
+    const stop = inView(group, () => {
+      stop();
       enter(targets, { opacity: [0, 1], y: [24, 0] }, { delay: stagger(0.08), duration: 0.55, ease: EASE });
     }, { amount: 0.2 });
   }
 }
 
 /** Counts numbers like "4" and "100%" up from zero when they appear. */
-export function setUpCounters() {
-  if (!richEffects()) return;
+export async function setUpCounters() {
+  if (!richEffects() || !(await observerWorks())) return;
   const { inView } = motion;
 
   for (const node of document.querySelectorAll('[data-count]')) {
@@ -118,29 +158,101 @@ export function setUpCounters() {
     const format = (value) => `${Math.round(value)}${suffix}`;
 
     node.textContent = format(0);
-    inView(node, () => {
+    const stop = inView(node, () => {
+      stop();
       enter(0, target, { duration: 1.4, ease: EASE, onUpdate: (value) => { node.textContent = format(value); } });
     }, { amount: 0.6 });
   }
 }
 
-/** The radar beam behind the checker turns slowly, once a minute. */
-export function setUpRadar() {
-  if (!richEffects()) return;
-  const sweep = document.querySelector('.hero-radar .radar-sweep');
-  if (sweep) motion.animate(sweep, { rotate: [0, 360] }, { duration: 60, repeat: Infinity, ease: 'linear' });
+// SVG parts scale and turn around a fixed point: their own center, or the
+// center of the drawing.
+function pinTransform(nodes, origin) {
+  for (const node of nodes) {
+    node.style.transformBox = origin === 'self' ? 'fill-box' : 'view-box';
+    node.style.transformOrigin = origin === 'self' ? 'center' : origin;
+  }
+}
+
+const STEP_ANIMATIONS = {
+  paste(art) {
+    const lines = art.querySelectorAll('[data-part="draw"]');
+    return [enter(lines, { strokeDashoffset: [1, 0] }, { delay: motion.stagger(0.18), duration: 0.45, ease: EASE })];
+  },
+  scan(art) {
+    const rings = art.querySelectorAll('[data-part="ring"]');
+    const sweep = art.querySelectorAll('[data-part="sweep"]');
+    const blip = art.querySelectorAll('[data-part="blip"]');
+    pinTransform(rings, 'self');
+    pinTransform(sweep, '100px 100px');
+    pinTransform(blip, 'self');
+    return [
+      enter(rings, { opacity: [0, 1], scale: [0.4, 1] }, { delay: motion.stagger(0.08), duration: 0.4, ease: EASE }),
+      enter(sweep, { rotate: [0, 360] }, { delay: 0.4, duration: 1.3, ease: 'easeInOut' }),
+      enter(blip, { opacity: [0, 1], scale: [0, 1.6, 1] }, { delay: 1.55, duration: 0.45, ease: EASE }),
+    ];
+  },
+  verdict(art) {
+    const ring = art.querySelectorAll('[data-part="draw"]');
+    const burst = art.querySelectorAll('[data-part="burst"]');
+    pinTransform(burst, '100px 100px');
+    return [
+      enter(ring, { strokeDashoffset: [1, 0] }, { duration: 0.7, ease: EASE }),
+      enter(burst, { opacity: [0, 1], scale: [0.3, 1] }, { delay: 0.6, duration: 0.5, ease: EASE }),
+    ];
+  },
+  explain(art) {
+    const dots = art.querySelectorAll('[data-part="pop"]');
+    const lines = art.querySelectorAll('[data-part="draw"]');
+    pinTransform(dots, 'self');
+    return [
+      enter(dots, { opacity: [0, 1], scale: [0, 1] }, { delay: motion.stagger(0.35), duration: 0.3, ease: EASE }),
+      enter(lines, { strokeDashoffset: [1, 0] }, { delay: motion.stagger(0.35, { startDelay: 0.15 }), duration: 0.4, ease: EASE }),
+    ];
+  },
+};
+
+/**
+ * Each step drawing acts out its step once when it scrolls into view, and
+ * again when pointed at. Light enough to run on phones too.
+ */
+export async function setUpStepArt() {
+  if (!enabled || !(await observerWorks())) return;
+
+  for (const art of document.querySelectorAll('.step-art[data-art]')) {
+    const play = STEP_ANIMATIONS[art.dataset.art];
+    if (!play) continue;
+    for (const line of art.querySelectorAll('[data-part="draw"]')) line.style.strokeDasharray = '1 1';
+
+    let running = false;
+    let played = false;
+    const run = () => {
+      if (running) return;
+      running = true;
+      played = true;
+      Promise.all(play(art)).then(() => { running = false; });
+    };
+
+    // Plays once when first seen; pointing at the step replays it.
+    const stop = motion.inView(art, () => {
+      stop();
+      if (!played) run();
+    }, { amount: 0.6 });
+    art.closest('.step').addEventListener('mouseenter', run);
+  }
 }
 
 /**
  * The footer wordmark wipes in from the left when it comes into view, then
  * the pennant unfurls from the pole.
  */
-export function setUpWordmark(wordmark) {
-  if (!richEffects()) return;
+export async function setUpWordmark(wordmark) {
+  if (!richEffects() || !(await observerWorks())) return;
   const flag = wordmark.querySelector('.wordmark-flag');
   wordmark.style.clipPath = 'inset(0 100% 0 0)';
 
-  motion.inView(wordmark, () => {
+  const stop = motion.inView(wordmark, () => {
+    stop();
     enter(wordmark, { clipPath: ['inset(0 100% 0 0)', 'inset(0 0% 0 0)'] }, { duration: 1.1, ease: EASE });
     if (flag) {
       enter(flag, { scaleX: [0, 1] }, { delay: 0.9, duration: 0.5, ease: EASE });
