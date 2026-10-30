@@ -125,7 +125,7 @@
 
     <section class="section" id="examples" aria-labelledby="examples-title">
       <div class="container">
-        <header class="section-head section-head-left">
+        <header class="section-head">
           <p class="eyebrow" data-i18n="examples.label">Examples</p>
           <h2 class="section-title" id="examples-title">
             <span data-i18n="examples.title.lead">Real scams,</span>
@@ -134,6 +134,20 @@
           <p class="section-lede" data-i18n="examples.body">These are based on scam texts people really receive. The highlights and tags come from RedFlag itself.</p>
         </header>
         <div class="examples" id="example-cards" data-reveal></div>
+      </div>
+    </section>
+
+    <section class="section" id="quiz" aria-labelledby="quiz-title">
+      <div class="container">
+        <header class="section-head">
+          <p class="eyebrow" data-i18n="quiz.label">Practice</p>
+          <h2 class="section-title" id="quiz-title">
+            <span data-i18n="quiz.title.lead">Can you spot</span>
+            <span class="accent" data-i18n="quiz.title.accent">the scam?</span>
+          </h2>
+          <p class="section-lede" data-i18n="quiz.body">Four real-looking messages. Decide for each one, then see why.</p>
+        </header>
+        <div class="quiz card" id="quiz-card" aria-live="polite"></div>
       </div>
     </section>
 
@@ -199,7 +213,7 @@
 
     <section class="section" id="how" aria-labelledby="how-title">
       <div class="container">
-        <header class="section-head section-head-left">
+        <header class="section-head">
           <p class="eyebrow" data-i18n="how.label">How it works</p>
           <h2 class="section-title" id="how-title">
             <span data-i18n="how.title.lead">Four steps.</span>
@@ -286,7 +300,7 @@
 
     <section class="section" id="stats" aria-labelledby="stats-title">
       <div class="container">
-        <header class="section-head section-head-left">
+        <header class="section-head">
           <p class="eyebrow" data-i18n="stats.label">Results</p>
           <h2 class="section-title" id="stats-title">
             <span data-i18n="stats.title.lead">Numbers</span>
@@ -399,22 +413,52 @@
 
   <footer class="site-footer">
     <div class="container">
-      <div class="footer-links">
-        <p class="footer-tagline" data-i18n="footer.tagline">Free, private scam checks in four languages.</p>
-        <ul>
-          <li><a class="repo-link" href="https://github.com/Fojikulul/RedFlag" rel="noopener" data-i18n="footer.github">Source code on GitHub</a></li>
-          <li><a href="https://reportfraud.ftc.gov" rel="noopener" data-i18n="footer.report">Report fraud: reportfraud.ftc.gov</a></li>
-          <li><a href="privacy.html" data-i18n="footer.privacy">Privacy</a></li>
-          <li><a href="terms.html" data-i18n="footer.terms">Terms</a></li>
-        </ul>
+      <div class="footer-grid">
+        <div class="footer-about">
+          <a class="brand" href="#top" aria-label="RedFlag">
+            <span class="wordmark" aria-hidden="true">redf<span class="wordmark-l">l<svg class="wordmark-flag" viewBox="0 0 60 30"><path d="M1 3 C17 -3 33 11 59 3 L59 27 C33 35 17 21 1 27 Z"/></svg></span>ag<span class="wordmark-dot">.</span></span>
+          </a>
+          <p class="footer-tagline" data-i18n="footer.tagline">Free, private scam checks in four languages.</p>
+          <a class="btn btn-primary focus-message" href="#checker" data-i18n="nav.check">Check a message</a>
+        </div>
+
+        <nav class="footer-col" aria-labelledby="footer-check">
+          <h2 id="footer-check" data-i18n="footer.colCheck">Use RedFlag</h2>
+          <ul>
+            <li><a href="#examples" data-i18n="footer.linkExamples">Examples</a></li>
+            <li><a href="#quiz" data-i18n="footer.linkQuiz">Can you spot the scam?</a></li>
+            <li><a href="#flags" data-i18n="footer.linkFlags">The red flags</a></li>
+            <li><a href="#how" data-i18n="footer.linkHow">How it works</a></li>
+          </ul>
+        </nav>
+
+        <nav class="footer-col" aria-labelledby="footer-help">
+          <h2 id="footer-help" data-i18n="footer.colHelp">Get help</h2>
+          <ul>
+            <li><a href="#report" data-i18n="footer.linkReport">Where to report a scam</a></li>
+            <li><a href="tel:+18333728311"><span data-i18n="footer.hotline">Elder Fraud Hotline</span><span class="footer-detail">1-833-372-8311</span></a></li>
+            <li><a href="https://reportfraud.ftc.gov" rel="noopener">reportfraud.ftc.gov</a></li>
+            <li><a href="https://www.ic3.gov" rel="noopener">ic3.gov</a></li>
+          </ul>
+        </nav>
+
+        <nav class="footer-col" aria-labelledby="footer-about-title">
+          <h2 id="footer-about-title" data-i18n="footer.colAbout">About</h2>
+          <ul>
+            <li><a href="#workshops" data-i18n="footer.linkWorkshops">Workshops</a></li>
+            <li><a class="repo-link" href="https://github.com/Fojikulul/RedFlag" rel="noopener" data-i18n="footer.github">Source code on GitHub</a></li>
+            <li><a href="privacy.html" data-i18n="footer.privacy">Privacy</a></li>
+            <li><a href="terms.html" data-i18n="footer.terms">Terms</a></li>
+          </ul>
+        </nav>
       </div>
 
       <button class="footer-mark wordmark" type="button" id="footer-flag" aria-label="RedFlag">
         <span aria-hidden="true">redf</span><span class="wordmark-l" aria-hidden="true">l<svg class="wordmark-flag" viewBox="0 0 60 30"><path d="M1 3 C17 -3 33 11 59 3 L59 27 C33 35 17 21 1 27 Z"><animate id="flag-wave" attributeName="d" dur="0.9s" begin="indefinite" repeatCount="2" calcMode="spline" keyTimes="0;0.5;1" keySplines=".45 0 .55 1;.45 0 .55 1" values="M1 3 C17 -3 33 11 59 3 L59 27 C33 35 17 21 1 27 Z;M1 3 C17 11 33 -3 59 3 L59 27 C33 21 17 35 1 27 Z;M1 3 C17 -3 33 11 59 3 L59 27 C33 35 17 21 1 27 Z"/></path></svg></span><span aria-hidden="true">ag<span class="wordmark-dot">.</span></span>
       </button>
 
-      <div class="footer-meta">
-        <p data-i18n="footer.madeBy">Made by Fojikulul. MIT license.</p>
+      <div class="footer-bottom">
+        <p>© <span id="year">2026</span> Fojikulul · <span data-i18n="footer.license">MIT license</span></p>
         <p data-i18n="footer.notAdvice">RedFlag gives general guidance, not legal or financial advice.</p>
       </div>
     </div>
