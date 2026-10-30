@@ -52,6 +52,8 @@ export default [
         'visa fee',
         'customs (is holding|are holding|fee)',
         'can you (help me with|lend me|send me) (some )?money',
+        '(soldier|military|army|marine|peacekeeper) _ (syria|afghanistan|iraq|yemen|overseas|abroad|deployed)',
+        'oil rig',
       ],
       uk: [
         'квит~ на літак',

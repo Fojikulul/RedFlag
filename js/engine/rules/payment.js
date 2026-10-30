@@ -83,6 +83,64 @@ export default [
     },
   },
   {
+    // The blunt version with no disguise at all: "send me money".
+    id: 'payment.money_request',
+    category: 'payment',
+    severity: 'high',
+    weight: 30,
+    patterns: {
+      en: [
+        '(send|give|wire|transfer|lend|loan|pay|mail) (me|us) _ (money|cash|funds|\\$ ?\\d[\\d,.]*|\\d+ (dollars|bucks))',
+        'need (you to )?(send|wire|transfer|lend|give) _ (money|cash|funds|\\$ ?\\d[\\d,.]*)',
+        'need (some |the )?(money|cash) (asap|urgently|now|today|right away|fast|quickly)',
+        'help (me )?with (some )?money',
+      ],
+      uk: [
+        '(надішл~|скин~|перекаж~|перекин~|переведи~|дай~|позич~|відправ~) (мені |нам )? _ (гроші|грошей|кошти|коштів|\\d[\\d\\s]* ?(грн|гривень|\\$|доларів))',
+        '(терміново |дуже )?потрібн~ (гроші|кошти)',
+      ],
+      ru: [
+        '(отправ~|скин~|перевед~|переведи~|дай~|одолжи~|пришли~|вышли~|перекин~) (мне |нам )? _ (деньги|денег|\\d[\\d\\s]* ?(руб~|\\$|долларов))',
+        '(срочно |очень )?нужн~ деньг~',
+      ],
+      es: [
+        '(mánd~|envía~|envíe~|dam~|deme|transfiér~|deposít~|préstam~|prést~) _ (dinero|plata|lana|\\$ ?\\d[\\d,.]*|\\d+ dólares)',
+        'necesito (que me (mandes|envíes|prestes|mande|envíe|preste) )?(dinero|plata|\\$ ?\\d)',
+      ],
+    },
+  },
+  {
+    // "Move your savings to a safe account" is how bank-impersonation scams
+    // empty people's accounts.
+    id: 'payment.drain_savings',
+    category: 'payment',
+    severity: 'high',
+    weight: 30,
+    patterns: {
+      en: [
+        'all (of )?(your|ur) (money|savings|cash|funds)',
+        'life savings',
+        '(move|transfer|withdraw|protect) _ (your|my) (money|savings|funds)',
+        'safe (bank )?account',
+      ],
+      uk: [
+        '(всі|усі|все) (свої |ваші |твої )?(гроші|заощадження|кошти)',
+        'безпечн~ рахун~',
+        'резервн~ рахун~',
+      ],
+      ru: [
+        'все (свои |ваши |твои )?(деньги|сбережения|накопления)',
+        'безопасн~ сч[её]т~',
+        'резервн~ сч[её]т~',
+      ],
+      es: [
+        'todo (tu|su|el) dinero',
+        '(tus|sus) ahorros',
+        'cuenta segura',
+      ],
+    },
+  },
+  {
     id: 'payment.p2p',
     category: 'payment',
     severity: 'medium',

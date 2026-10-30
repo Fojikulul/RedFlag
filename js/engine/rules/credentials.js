@@ -32,6 +32,36 @@ export default [
     },
   },
   {
+    // No pretext at all, just "give me your password".
+    id: 'credentials.secret_request',
+    category: 'credentials',
+    severity: 'high',
+    weight: 35,
+    skipIfNegated: true,
+    patterns: {
+      en: [
+        '(give|send|tell|text|share) (me|us) (your |the )?(bank |online banking |account |email )?(password|pin|passcode|card number|credit card( number)?|debit card( number)?|login|cvv|security code|social security( number)?|ssn)',
+        'what(\'s| is) (your|ur) (bank |account |email )?(password|pin|card number|credit card number|social security number|ssn|cvv)',
+        '(3|three) (digits|numbers) on the back',
+      ],
+      uk: [
+        '(дай~|скажи~|надішл~|скин~|повідом~) (мені |нам )?(свій |ваш |твій )?(пароль|пін|пін-код|номер картки|cvv)',
+        '(який|яка) (твій|ваш) (пароль|пін)',
+        '(три|3) цифри на звороті',
+      ],
+      ru: [
+        '(дай~|скажи~|отправ~|скин~|сообщи~) (мне |нам )?(свой |ваш |твой )?(пароль|пин|пин-код|номер карты|cvv)',
+        'какой (твой|ваш) (пароль|пин)',
+        '(три|3) цифры на обороте',
+      ],
+      es: [
+        '(dame|deme|dime|dígame|envíame|mándame) (la |tu |su )?(contraseña|clave|pin|número de (tu |su )?tarjeta|cvv)',
+        'cuál es (tu|su) (contraseña|clave|pin)',
+        '(los )?(tres|3) (dígitos|números) de atrás',
+      ],
+    },
+  },
+  {
     id: 'credentials.personal_info',
     category: 'credentials',
     severity: 'high',
@@ -42,7 +72,7 @@ export default [
         '(verify|confirm|update|provide|enter|send|reply with|validate|re-enter) (your |the )?(ssn|social security number|account (number|details|information)|card (number|details|information)|bank (details|information|account)|password|pin|cvv|login (details|credentials|information)|personal (details|information)|billing (details|information|address)|payment (details|information|method)|date of birth)',
         '(verify|confirm|validate) (your )?(identity|account)',
         'log ?in (here|now|to (verify|confirm|restore|unlock|avoid))',
-        'click (here|the link|below|this link) to (verify|confirm|update|restore|unlock|claim|log ?in|sign in|reactivate)',
+        'click (here|the link|below|this link) to (verify|confirm|update|restore|unlock|claim|get|receive|log ?in|sign in|reactivate)',
         'update your (payment|billing|account|delivery|shipping) (method|information|details|address)',
       ],
       uk: [

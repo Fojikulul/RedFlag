@@ -13,6 +13,7 @@ export default [
         'stay on the line',
         '(don\'t|do not) (contact|call|talk to) (your )?(bank|family|police|anyone)',
         'confidential (matter|case|investigation)',
+        '(will|i\'ll|ill) explain later',
       ],
       uk: [
         'нікому не (кажі~|каж~|розповіда~|говорі~|говори)',

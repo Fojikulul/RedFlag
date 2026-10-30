@@ -12,6 +12,7 @@ export default [
         'sweepstakes',
         'jackpot',
         'claim (your )?(prize|reward|gift|winnings|refund|money)',
+        '(get|claim|receive|collect) (your |a )?(free )?(\\$ ?\\d[\\d,]* )?(\\p{L}+ )?(reward|prize|bonus)',
         'free (iphone|ipad|gift|vacation|cruise|money)',
         'inheritance',
         'unclaimed (funds|money|package|prize)',
