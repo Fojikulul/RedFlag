@@ -57,5 +57,6 @@
   {"id": "ru-013", "lang": "ru", "expected": "red", "source": "example", "notes": "срочно деньги", "text": "Переведи мне деньги срочно"},
   {"id": "es-012", "lang": "es", "expected": "red", "source": "example", "notes": "todo tu dinero", "text": "Mándame todo tu dinero"},
   {"id": "es-013", "lang": "es", "expected": "red", "source": "example", "notes": "dinero urgente", "text": "Necesito que me mandes dinero urgente"},
-  {"id": "es-014", "lang": "es", "expected": "yellow", "source": "example", "notes": "contraseña", "text": "Dame la contraseña de tu banco"}
+  {"id": "es-014", "lang": "es", "expected": "yellow", "source": "example", "notes": "contraseña", "text": "Dame la contraseña de tu banco"},
+  {"id": "en-020", "lang": "en", "expected": "yellow", "source": "example", "notes": "it is me, spelled out", "text": "Hi grandma, it is me. I got a new phone."}
 ]

@@ -6,8 +6,8 @@ export default [
     weight: 30,
     patterns: {
       en: [
-        '(grandma|grandpa|grandmother|grandfather|nana|mom|mum|dad),? (it\'s|its|this is) me',
-        '(it\'s|this is) your (grandson|granddaughter|nephew|niece|son|daughter)',
+        '(grandma|grandpa|grandmother|grandfather|nana|mom|mum|dad),? (it\'s|its|it is|this is) me',
+        '(it\'s|it is|this is) your (grandson|granddaughter|nephew|niece|son|daughter)',
         '(i\'m|i am|i was|i got) (in jail|in the hospital|arrested|in trouble|in an accident|stuck)',
         'i\'ve been arrested',
         'need (money|cash|\\$ ?\\d[\\d,]*) (for|to pay) (bail|a lawyer|the lawyer|the hospital|the fine)',
