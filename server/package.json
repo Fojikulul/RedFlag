@@ -1,0 +1,18 @@
+{
+  "name": "redflag-ai",
+  "version": "1.0.0",
+  "description": "Cloudflare Worker that gives RedFlag an optional AI second opinion.",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "scripts": {
+    "dev": "wrangler dev --port 8787",
+    "deploy": "wrangler deploy"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^1.3.0"
+  },
+  "devDependencies": {
+    "wrangler": "4.151.0"
+  }
+}
