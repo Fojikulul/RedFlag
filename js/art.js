@@ -76,9 +76,28 @@ function explain() {
   return svg(parts);
 }
 
-const DRAWINGS = { paste, scan, verdict, explain };
+// The large radar behind the checker. Rings, cross hairs and one beam.
+function radar() {
+  const size = 820;
+  const middle = size / 2;
+  const root = document.createElementNS(SVG_NS, 'svg');
+  root.setAttribute('viewBox', `0 0 ${size} ${size}`);
 
-export function drawStepArt() {
+  for (let ring = 1; ring <= 7; ring++) {
+    root.append(shape('circle', { cx: middle, cy: middle, r: ring * 56, class: ring % 2 ? 'art-dotted' : '' }));
+  }
+  root.append(shape('line', { x1: middle, y1: 20, x2: middle, y2: size - 20 }));
+  root.append(shape('line', { x1: 20, y1: middle, x2: size - 20, y2: middle }));
+
+  const sweep = shape('g', { class: 'radar-sweep' });
+  sweep.append(shape('line', { x1: middle, y1: middle, x2: middle, y2: middle - 392, class: 'radar-beam' }));
+  root.append(sweep);
+  return root;
+}
+
+const DRAWINGS = { paste, scan, verdict, explain, radar };
+
+export function drawArt() {
   for (const slot of document.querySelectorAll('[data-art]')) {
     const draw = DRAWINGS[slot.dataset.art];
     if (draw) slot.replaceChildren(draw());

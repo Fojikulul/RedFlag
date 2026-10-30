@@ -9,8 +9,8 @@ const largeScreen = window.matchMedia('(min-width: 768px)');
 const enabled = Boolean(motion) && !reducedMotion;
 const EASE = [0.22, 1, 0.36, 1];
 
-// Scroll reveals, counters and the background glow are skipped on phones.
-// Older phones are what a lot of our visitors use.
+// Scroll reveals, counters and the radar sweep are skipped on phones. Older
+// phones are what a lot of our visitors use.
 function richEffects() {
   return enabled && largeScreen.matches;
 }
@@ -28,6 +28,20 @@ function enter(targets, keyframes, options = {}) {
 export function popIn(element) {
   if (!enabled) return;
   enter(element, { opacity: [0, 1], scale: [0.96, 1], y: [-6, 0] }, { duration: 0.18, ease: EASE });
+}
+
+/**
+ * A beam passes once over the message box, so pressing "Check it" visibly
+ * does something. Resolves when the result can be shown.
+ */
+export function scan(field) {
+  if (!enabled) return Promise.resolve();
+  const beam = document.createElement('div');
+  beam.className = 'scan-beam';
+  field.append(beam);
+
+  const animation = enter(beam, { x: ['-100%', '400%'], opacity: [1, 1, 0] }, { duration: 0.55, ease: 'easeInOut' });
+  return animation.then(() => beam.remove(), () => beam.remove());
 }
 
 export function revealResult(result) {
@@ -61,8 +75,7 @@ export function setUpAccordions(selector) {
       event.preventDefault();
 
       if (details.open) {
-        const animation = enter(body, { height: [`${body.offsetHeight}px`, '0px'], opacity: [1, 0] }, { duration: 0.25, ease: EASE });
-        animation.then(() => {
+        enter(body, { height: [`${body.offsetHeight}px`, '0px'], opacity: [1, 0] }, { duration: 0.25, ease: EASE }).then(() => {
           details.open = false;
           body.style.height = '';
           body.style.opacity = '';
@@ -70,8 +83,7 @@ export function setUpAccordions(selector) {
       } else {
         details.open = true;
         const height = body.scrollHeight;
-        const animation = enter(body, { height: ['0px', `${height}px`], opacity: [0, 1] }, { duration: 0.3, ease: EASE });
-        animation.then(() => {
+        enter(body, { height: ['0px', `${height}px`], opacity: [0, 1] }, { duration: 0.3, ease: EASE }).then(() => {
           body.style.height = '';
         });
       }
@@ -79,7 +91,7 @@ export function setUpAccordions(selector) {
   }
 }
 
-/** Fades sections and their cards in as they scroll into view. */
+/** Fades groups of cards in as they scroll into view. Headings never hide. */
 export function setUpReveals() {
   if (!richEffects()) return;
   const { inView, stagger } = motion;
@@ -90,21 +102,20 @@ export function setUpReveals() {
     for (const target of targets) target.style.opacity = '0';
 
     inView(group, () => {
-      enter(targets, { opacity: [0, 1], y: [28, 0] }, { delay: stagger(0.09), duration: 0.6, ease: EASE });
+      enter(targets, { opacity: [0, 1], y: [24, 0] }, { delay: stagger(0.08), duration: 0.55, ease: EASE });
     }, { amount: 0.2 });
   }
 }
 
-/** Counts numbers like "04" and "100%" up from zero when they appear. */
+/** Counts numbers like "4" and "100%" up from zero when they appear. */
 export function setUpCounters() {
   if (!richEffects()) return;
   const { inView } = motion;
 
   for (const node of document.querySelectorAll('[data-count]')) {
     const target = Number(node.dataset.count);
-    const pad = node.dataset.countPad ? Number(node.dataset.countPad) : 0;
     const suffix = node.dataset.countSuffix ?? '';
-    const format = (value) => `${String(Math.round(value)).padStart(pad, '0')}${suffix}`;
+    const format = (value) => `${Math.round(value)}${suffix}`;
 
     node.textContent = format(0);
     inView(node, () => {
@@ -113,24 +124,35 @@ export function setUpCounters() {
   }
 }
 
-/** The slow red glow drifting behind the hero, like the reference's gradient. */
-export function setUpHeroGlow() {
+/** The radar beam behind the checker turns slowly, once a minute. */
+export function setUpRadar() {
   if (!richEffects()) return;
-  const blobs = document.querySelectorAll('.hero-glow span');
-  const paths = [
-    { x: [0, 120, -60, 0], y: [0, -40, 30, 0], scale: [1, 1.15, 0.95, 1] },
-    { x: [0, -140, 40, 0], y: [0, 30, -50, 0], scale: [1, 0.9, 1.1, 1] },
-    { x: [0, 80, -100, 0], y: [0, 50, -20, 0], scale: [1, 1.1, 1, 1] },
-  ];
-  blobs.forEach((blob, index) => {
-    motion.animate(blob, paths[index % paths.length], { duration: 22 + index * 6, repeat: Infinity, ease: 'easeInOut' });
-  });
+  const sweep = document.querySelector('.hero-radar .radar-sweep');
+  if (sweep) motion.animate(sweep, { rotate: [0, 360] }, { duration: 60, repeat: Infinity, ease: 'linear' });
+}
+
+/**
+ * The footer wordmark wipes in from the left when it comes into view, then
+ * the pennant unfurls from the pole.
+ */
+export function setUpWordmark(wordmark) {
+  if (!richEffects()) return;
+  const flag = wordmark.querySelector('.wordmark-flag');
+  wordmark.style.clipPath = 'inset(0 100% 0 0)';
+
+  motion.inView(wordmark, () => {
+    enter(wordmark, { clipPath: ['inset(0 100% 0 0)', 'inset(0 0% 0 0)'] }, { duration: 1.1, ease: EASE });
+    if (flag) {
+      enter(flag, { scaleX: [0, 1] }, { delay: 0.9, duration: 0.5, ease: EASE });
+      flag.style.transformOrigin = '0 50%';
+    }
+  }, { amount: 0.5 });
 }
 
 /** A small press-down on buttons, so taps feel acknowledged. */
 export function setUpPress() {
   if (!enabled || !motion.press) return;
-  motion.press('.btn, .lang-toggle', (element) => {
+  motion.press('.btn, .lang-toggle, .text-size, .paste-button', (element) => {
     motion.animate(element, { scale: 0.97 }, { duration: 0.1 });
     return () => motion.animate(element, { scale: 1 }, { type: 'spring', bounce: 0.4, duration: 0.35 });
   });

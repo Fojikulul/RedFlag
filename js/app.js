@@ -1,11 +1,13 @@
-import { drawStepArt } from './art.js';
+import { drawArt } from './art.js';
 import config from './config.js';
 import * as effects from './effects.js';
 import { analyze } from './engine/index.js';
 import { LANGUAGES, pickLanguage, t } from './i18n/index.js';
 
-const STORAGE_KEY = 'redflag.lang';
+const LANG_KEY = 'redflag.lang';
+const TEXT_SIZE_KEY = 'redflag.textSize';
 const EXAMPLE_COUNT = 3;
+const AI_TIMEOUT_MS = 30_000;
 
 const VERDICT_ICONS = {
   red: '<svg viewBox="0 0 48 48" aria-hidden="true"><path fill="currentColor" d="M16.5 4h15L44 16.5v15L31.5 44h-15L4 31.5v-15L16.5 4Z" opacity=".22"/><path fill="none" stroke="currentColor" stroke-width="3" d="M16.5 4h15L44 16.5v15L31.5 44h-15L4 31.5v-15L16.5 4Z"/><path fill="currentColor" d="M22 13h4v15h-4zM22 32h4v4h-4z"/></svg>',
@@ -16,11 +18,14 @@ const VERDICT_ICONS = {
 const state = {
   lang: 'en',
   checkedText: null,
+  // The AI answer belongs to one message, so it is kept with that message.
+  ai: null,
 };
 
 const elements = {
   form: document.getElementById('check-form'),
   message: document.getElementById('message'),
+  field: document.querySelector('.tool-field'),
   error: document.getElementById('tool-error'),
   clear: document.getElementById('clear-button'),
   paste: document.getElementById('paste-button'),
@@ -30,29 +35,31 @@ const elements = {
   announcer: document.getElementById('result-announcer'),
   examples: document.getElementById('example-cards'),
   localTime: document.getElementById('local-time'),
-  localPlace: document.getElementById('local-place'),
+  localZone: document.getElementById('local-zone'),
+  textSize: document.getElementById('text-size'),
   langToggle: document.getElementById('lang-toggle'),
   langOptions: document.getElementById('lang-options'),
   langCurrent: document.getElementById('lang-current'),
+  localAgency: document.getElementById('local-agency-link'),
   footerFlag: document.getElementById('footer-flag'),
   flagWave: document.getElementById('flag-wave'),
 };
 
-// localStorage throws in some private-browsing modes; the page should
-// still work, it just won't remember the language.
-function readSavedLanguage() {
+// localStorage throws in some private-browsing modes. The page still works,
+// it just won't remember the settings.
+function readSetting(key) {
   try {
-    return localStorage.getItem(STORAGE_KEY);
+    return localStorage.getItem(key);
   } catch {
     return null;
   }
 }
 
-function saveLanguage(lang) {
+function saveSetting(key, value) {
   try {
-    localStorage.setItem(STORAGE_KEY, lang);
+    localStorage.setItem(key, value);
   } catch {
-    // Not saved; nothing else depends on it.
+    // Not saved; nothing depends on it.
   }
 }
 
@@ -88,6 +95,7 @@ function setLanguage(lang) {
 
   renderStats();
   renderExamples();
+  renderLocalAgency();
   updateClock();
   if (state.checkedText !== null) renderResult(state.checkedText, { announce: false });
 }
@@ -121,6 +129,12 @@ function uniqueByRule(flags) {
   return [...byRule.values()].sort((a, b) => b.weight - a.weight);
 }
 
+function section(heading, ...children) {
+  const block = el('section');
+  block.append(el('h3', 'result-heading', heading), ...children);
+  return block;
+}
+
 function renderResult(text, { announce = true } = {}) {
   const { lang } = state;
   const result = analyze(text);
@@ -140,10 +154,7 @@ function renderResult(text, { announce = true } = {}) {
   verdict.append(verdictCopy);
 
   const body = el('div', 'result-body');
-
-  const messageBlock = el('section');
-  messageBlock.append(el('h3', 'result-heading', t('result.yourMessage', lang)), highlightedMessage(text, result.highlights));
-  body.append(messageBlock);
+  body.append(section(t('result.yourMessage', lang), highlightedMessage(text, result.highlights)));
 
   if (result.flags.length > 0) {
     const reasons = el('ul', 'flag-reasons');
@@ -156,16 +167,21 @@ function renderResult(text, { announce = true } = {}) {
       );
       reasons.append(item);
     }
-    const reasonsBlock = el('section');
-    reasonsBlock.append(el('h3', 'result-heading', t('result.flagsTitle', lang)), reasons);
-    body.append(reasonsBlock);
+    body.append(section(t('result.flagsTitle', lang), reasons));
   }
 
   const advice = el('ol', 'advice');
   for (const key of result.adviceKeys) advice.append(el('li', '', t(key, lang)));
-  const adviceBlock = el('section');
-  adviceBlock.append(el('h3', 'result-heading', t('result.adviceTitle', lang)), advice);
-  body.append(adviceBlock, el('p', 'result-disclaimer', t('result.disclaimer', lang)));
+  body.append(section(t('result.adviceTitle', lang), advice));
+
+  if (config.aiEndpoint) body.append(aiPanel(result.verdict));
+
+  const again = el('button', 'btn btn-ghost', t('result.again', lang));
+  again.type = 'button';
+  again.addEventListener('click', clear);
+  const actions = el('div', 'result-actions');
+  actions.append(again);
+  body.append(el('p', 'result-disclaimer', t('result.disclaimer', lang)), actions);
 
   elements.result.replaceChildren(verdict, body);
   elements.result.setAttribute('aria-labelledby', 'result-title');
@@ -177,7 +193,90 @@ function renderResult(text, { announce = true } = {}) {
   }
 }
 
-function check() {
+// AI second opinion. Opt-in per message, because it is the one time the
+// text leaves the device.
+
+function aiPanel(ruleVerdict) {
+  const { lang } = state;
+  const panel = el('section', 'ai-panel');
+  panel.setAttribute('aria-live', 'polite');
+
+  if (state.ai?.status === 'loading') {
+    panel.append(el('p', 'ai-loading', t('ai.loading', lang)));
+    return panel;
+  }
+
+  if (state.ai?.status === 'done') {
+    const { opinion } = state.ai;
+    panel.append(
+      el('h3', '', t('ai.resultTitle', lang)),
+      el('span', `ai-verdict ai-verdict-${opinion.verdict}`, t(`ai.verdict.${opinion.verdict}`, lang)),
+      el('p', 'ai-explanation', opinion.explanation),
+    );
+    if (opinion.advice) {
+      const advice = el('p', 'ai-advice');
+      advice.append(`${t('ai.adviceLabel', lang)} ${opinion.advice}`);
+      panel.append(advice);
+    }
+    panel.append(el('p', '', t('ai.disclaimer', lang)));
+    return panel;
+  }
+
+  // A green verdict is when a second look matters most, so say so.
+  panel.append(
+    el('h3', '', t(ruleVerdict === 'green' ? 'ai.titleGreen' : 'ai.title', lang)),
+    el('p', '', t('ai.text', lang)),
+  );
+  if (state.ai?.status === 'error') panel.append(el('p', 'tool-error', t(state.ai.messageKey, lang)));
+
+  const button = el('button', 'btn btn-primary', t('ai.button', lang));
+  button.type = 'button';
+  button.addEventListener('click', askAi);
+  panel.append(button);
+  return panel;
+}
+
+async function askAi() {
+  const text = state.checkedText;
+  if (text === null) return;
+
+  state.ai = { status: 'loading' };
+  renderResult(text, { announce: false });
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), AI_TIMEOUT_MS);
+
+  try {
+    const response = await fetch(config.aiEndpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text, lang: state.lang }),
+      signal: controller.signal,
+    });
+    if (state.checkedText !== text) return;
+
+    if (response.status === 429 || response.status === 503) {
+      state.ai = { status: 'error', messageKey: 'ai.busy' };
+    } else if (!response.ok) {
+      state.ai = { status: 'error', messageKey: 'ai.error' };
+    } else {
+      state.ai = { status: 'done', opinion: await response.json() };
+    }
+  } catch {
+    if (state.checkedText !== text) return;
+    state.ai = { status: 'error', messageKey: navigator.onLine === false ? 'ai.offline' : 'ai.error' };
+  } finally {
+    clearTimeout(timer);
+  }
+
+  renderResult(text, { announce: false });
+  if (state.ai.status === 'done') {
+    const { opinion } = state.ai;
+    elements.announcer.textContent = `${t('ai.resultTitle', state.lang)}: ${t(`ai.verdict.${opinion.verdict}`, state.lang)}. ${opinion.explanation}`;
+  }
+}
+
+async function check() {
   const text = elements.message.value;
   if (text.trim() === '') {
     elements.error.hidden = false;
@@ -186,7 +285,11 @@ function check() {
   }
 
   elements.error.hidden = true;
+  elements.pasteError.hidden = true;
   state.checkedText = text;
+  state.ai = null;
+
+  await effects.scan(elements.field);
   renderResult(text);
 
   elements.result.tabIndex = -1;
@@ -198,14 +301,21 @@ function check() {
 function clear() {
   elements.message.value = '';
   elements.error.hidden = true;
+  elements.pasteError.hidden = true;
   elements.result.hidden = true;
   elements.result.replaceChildren();
   elements.announcer.textContent = '';
   state.checkedText = null;
-  elements.message.focus();
+  state.ai = null;
+  focusMessage();
 }
 
-// Reading the clipboard happens on the device, like everything else. Some
+function focusMessage() {
+  elements.message.focus({ preventScroll: true });
+  document.getElementById('checker').scrollIntoView({ block: 'start' });
+}
+
+// Reading the clipboard happens on the device, like the check itself. Some
 // browsers refuse it, so fall back to telling people how to paste by hand.
 async function pasteFromClipboard() {
   elements.pasteError.hidden = true;
@@ -259,30 +369,40 @@ function setStat(id, value) {
   node.textContent = value ?? t('stats.pending', state.lang);
 }
 
-// The city comes from the browser's time zone ("America/New_York"), so the
-// header can show a place without asking for location or calling anything.
-function localPlace() {
-  const zone = Intl.DateTimeFormat().resolvedOptions().timeZone ?? '';
-  const city = zone.split('/').pop().replace(/_/g, ' ');
-  return city && city !== 'UTC' ? city : t('nav.localTime', state.lang);
+function renderLocalAgency() {
+  const { name, phone } = config.localAgency;
+  const link = elements.localAgency;
+  link.hidden = !(name && phone);
+  if (link.hidden) return;
+  link.href = `tel:${phone.replace(/[^\d+]/g, '')}`;
+  link.textContent = `${t('report.local.button', state.lang, { name })} · ${phone}`;
+}
+
+// The visitor's own time zone, named in the page language ("Eastern Time",
+// "Восточное время"). Comes from the browser, so no location is asked for.
+function localZone() {
+  for (const style of ['longGeneric', 'long']) {
+    try {
+      const parts = new Intl.DateTimeFormat(state.lang, { timeZoneName: style }).formatToParts(new Date());
+      const name = parts.find((part) => part.type === 'timeZoneName')?.value;
+      if (name) return name;
+    } catch {
+      // Older browsers don't know "longGeneric"; try the next style.
+    }
+  }
+  return t('nav.localTime', state.lang);
 }
 
 function updateClock() {
-  elements.localPlace.textContent = localPlace();
+  elements.localZone.textContent = localZone();
   const time = new Date();
   elements.localTime.dateTime = time.toISOString();
-  elements.localTime.textContent = new Intl.DateTimeFormat(state.lang, { hour: '2-digit', minute: '2-digit' }).format(time);
+  elements.localTime.textContent = new Intl.DateTimeFormat(state.lang, { hour: 'numeric', minute: '2-digit' }).format(time);
 }
 
-function setUpTicker() {
-  const track = document.querySelector('.ticker-track');
-  const list = track.querySelector('.ticker-list');
-  // A second copy makes the loop seamless. It is hidden from screen readers
-  // so the list is only read once.
-  const copy = list.cloneNode(true);
-  copy.setAttribute('aria-hidden', 'true');
-  track.append(copy);
-  track.classList.add('is-scrolling');
+function setTextSize(large) {
+  document.documentElement.classList.toggle('text-large', large);
+  elements.textSize.setAttribute('aria-pressed', String(large));
 }
 
 function languageButtons() {
@@ -313,7 +433,7 @@ function setUpLanguageMenu() {
   for (const button of languageButtons()) {
     button.addEventListener('click', () => {
       setLanguage(button.dataset.lang);
-      saveLanguage(button.dataset.lang);
+      saveSetting(LANG_KEY, button.dataset.lang);
       closeLanguageMenu();
     });
   }
@@ -341,13 +461,21 @@ function setUpLanguageMenu() {
   });
 }
 
-function setUpRepoLinks() {
+function setUpLinks() {
   for (const link of document.querySelectorAll('.repo-link')) link.href = config.repoUrl;
 
   const workshop = document.getElementById('workshop-link');
   workshop.href = config.contactEmail
     ? `mailto:${config.contactEmail}?subject=${encodeURIComponent('RedFlag workshop')}`
     : `${config.repoUrl}/issues`;
+
+  // "Check a message" should land the cursor in the box, not just near it.
+  for (const link of document.querySelectorAll('.focus-message')) {
+    link.addEventListener('click', (event) => {
+      event.preventDefault();
+      focusMessage();
+    });
+  }
 }
 
 function init() {
@@ -373,25 +501,29 @@ function init() {
   elements.clear.addEventListener('click', clear);
   elements.paste.addEventListener('click', pasteFromClipboard);
   elements.example.addEventListener('click', () => checkText(t('examples.3.text', state.lang)));
-
-  setUpLanguageMenu();
-
+  elements.textSize.addEventListener('click', () => {
+    const large = elements.textSize.getAttribute('aria-pressed') !== 'true';
+    setTextSize(large);
+    saveSetting(TEXT_SIZE_KEY, large ? 'large' : 'normal');
+  });
   elements.footerFlag.addEventListener('click', () => effects.waveFlag(elements.flagWave));
 
-  setUpRepoLinks();
-  setUpTicker();
-  drawStepArt();
+  setUpLanguageMenu();
+  setUpLinks();
+  drawArt();
   effects.setUpAccordions('.flag-item, .faq details');
   effects.setUpPress();
 
-  const saved = readSavedLanguage();
+  setTextSize(readSetting(TEXT_SIZE_KEY) === 'large');
+  const saved = readSetting(LANG_KEY);
   const supported = LANGUAGES.map((language) => language.code);
   setLanguage(supported.includes(saved) ? saved : pickLanguage(navigator.languages ?? [navigator.language]));
 
   // After the first render, so counters and reveals see the translated text.
   effects.setUpReveals();
   effects.setUpCounters();
-  effects.setUpHeroGlow();
+  effects.setUpRadar();
+  effects.setUpWordmark(elements.footerFlag);
 
   setInterval(updateClock, 30_000);
 }

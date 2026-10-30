@@ -3,9 +3,9 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title data-i18n="meta.title">RedFlag — check a suspicious message before you reply</title>
+  <title data-i18n="meta.title">RedFlag: check a suspicious message before you reply</title>
   <meta name="description" data-i18n-attr="content:meta.description" content="Free, private scam checker. Paste a text, email or link and get a plain-language warning in English, Ukrainian, Russian or Spanish.">
-  <meta name="theme-color" content="#0B0B0B">
+  <meta name="theme-color" content="#0d0c0b">
   <meta name="color-scheme" content="dark">
   <meta property="og:title" content="RedFlag">
   <meta property="og:description" content="Free, private scam checker in English, Ukrainian, Russian and Spanish.">
@@ -24,9 +24,14 @@
         <span class="wordmark" aria-hidden="true">redf<span class="wordmark-l">l<svg class="wordmark-flag" viewBox="0 0 60 30"><path d="M1 3 C17 -3 33 11 59 3 L59 27 C33 35 17 21 1 27 Z"/></svg></span>ag<span class="wordmark-dot">.</span></span>
       </a>
 
-      <p class="header-time"><span id="local-place"></span> · <time id="local-time"></time></p>
+      <p class="header-time"><span id="local-zone"></span> · <time id="local-time"></time></p>
 
       <div class="header-actions">
+        <button class="text-size" type="button" id="text-size" aria-pressed="false">
+          <span aria-hidden="true">A<span class="text-size-big">A</span></span>
+          <span class="visually-hidden" data-i18n="nav.textSize">Bigger text</span>
+        </button>
+
         <div class="lang-menu" id="lang-menu">
           <button class="lang-toggle" type="button" id="lang-toggle" aria-haspopup="true" aria-expanded="false" aria-controls="lang-options">
             <svg class="lang-globe" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3Z"/></svg>
@@ -41,14 +46,15 @@
             <li role="none"><button type="button" role="menuitemradio" data-lang="es" lang="es" aria-checked="false"><span class="lang-code">ESP</span><span class="lang-name">Español</span></button></li>
           </ul>
         </div>
-        <a class="btn btn-primary header-cta" href="#checker" data-i18n="nav.check">Check a message</a>
+
+        <a class="btn btn-primary header-cta focus-message" href="#checker" data-i18n="nav.check">Check a message</a>
       </div>
     </div>
   </header>
 
   <main id="top">
     <section class="hero">
-      <div class="hero-glow" aria-hidden="true"><span></span><span></span><span></span></div>
+      <div class="hero-radar" data-art="radar" aria-hidden="true"></div>
       <div class="container hero-grid">
         <div class="hero-intro">
           <p class="eyebrow-pill" data-i18n="hero.label">Free · Private · No sign-up</p>
@@ -69,20 +75,22 @@
                 <span data-i18n="tool.paste">Paste</span>
               </button>
             </div>
-            <p class="tool-error" id="paste-error" role="alert" hidden data-i18n="tool.pasteFailed">Your browser didn't let us paste. Press and hold inside the box, then choose Paste.</p>
             <p class="tool-error" id="tool-error" role="alert" hidden data-i18n="tool.empty">Paste a message first, then press Check it.</p>
+            <p class="tool-error" id="paste-error" role="alert" hidden data-i18n="tool.pasteFailed">Your browser didn't let us paste. Press and hold inside the box, then choose Paste.</p>
 
             <div class="tool-actions">
               <button class="btn btn-primary btn-large" type="submit" data-i18n="tool.check">Check it</button>
               <button class="btn btn-ghost" type="button" id="clear-button" data-i18n="tool.clear">Clear</button>
-              <button class="btn-link" type="button" id="example-button" data-i18n="tool.tryExample">Try an example</button>
             </div>
 
             <p class="tool-privacy">
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10V8a5 5 0 0 1 10 0v2h1a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1v-9a1 1 0 0 1 1-1h1Zm2 0h6V8a3 3 0 0 0-6 0v2Z"/></svg>
-              <span data-i18n="tool.privacy">Your message never leaves your device.</span>
+              <span data-i18n="tool.privacy">Your message is checked right here, on your device.</span>
             </p>
-            <p class="tool-hint" data-i18n="tool.hint">Tip: to copy a text message, press and hold it, then choose Copy.</p>
+            <p class="tool-hint">
+              <span data-i18n="tool.hint">Tip: to copy a text message, press and hold it, then choose Copy.</span>
+              <button class="btn-link" type="button" id="example-button" data-i18n="tool.tryExample">Try an example</button>
+            </p>
           </form>
 
           <div class="result" id="result" hidden></div>
@@ -92,108 +100,32 @@
         <div class="hero-body">
           <p class="lede" data-i18n="hero.body">RedFlag reads the message the way a careful friend would. It points out the tricks scammers use and tells you what to do next, in plain words.</p>
           <div class="btn-row">
-            <a class="btn btn-ghost" href="#how" data-i18n="hero.howItWorks">How it works</a>
             <a class="btn btn-ghost" href="#examples" data-i18n="hero.examples">See examples</a>
+            <a class="btn btn-ghost" href="#how" data-i18n="hero.howItWorks">How it works</a>
           </div>
         </div>
       </div>
     </section>
 
-    <section class="section" id="how" aria-labelledby="how-title">
-      <div class="container">
-        <header class="section-head" data-reveal>
-          <p class="eyebrow" data-i18n="how.label">How it works</p>
-          <h2 class="section-title" id="how-title">
-            <span data-i18n="how.title.lead">Four steps.</span>
-            <span class="accent" data-i18n="how.title.accent">About ten seconds.</span>
-          </h2>
-          <p class="section-lede" data-i18n="how.body">No account, no download, no waiting. Everything happens on your own phone or computer.</p>
-        </header>
-
-        <ol class="steps" data-reveal>
-          <li class="card step" data-reveal-item>
-            <div class="step-art" data-art="paste" aria-hidden="true"></div>
-            <span class="step-number" aria-hidden="true">01</span>
-            <h3 data-i18n="how.step1.title">Paste</h3>
-            <p data-i18n="how.step1.text">Copy the text, email or link that worries you and paste it into the box.</p>
-          </li>
-          <li class="card step" data-reveal-item>
-            <div class="step-art" data-art="scan" aria-hidden="true"></div>
-            <span class="step-number" aria-hidden="true">02</span>
-            <h3 data-i18n="how.step2.title">Scan</h3>
-            <p data-i18n="how.step2.text">RedFlag checks it against the tricks scammers use most, in four languages.</p>
-          </li>
-          <li class="card step" data-reveal-item>
-            <div class="step-art" data-art="verdict" aria-hidden="true"></div>
-            <span class="step-number" aria-hidden="true">03</span>
-            <h3 data-i18n="how.step3.title">Verdict</h3>
-            <p data-i18n="how.step3.text">You get a clear answer: red for likely scam, yellow for be careful, green for no signs found.</p>
-          </li>
-          <li class="card step" data-reveal-item>
-            <div class="step-art" data-art="explain" aria-hidden="true"></div>
-            <span class="step-number" aria-hidden="true">04</span>
-            <h3 data-i18n="how.step4.title">Explain</h3>
-            <p data-i18n="how.step4.text">Every warning comes with a plain explanation and what to do next.</p>
-          </li>
-        </ol>
-      </div>
-    </section>
-
-    <section class="section" id="stats" aria-labelledby="stats-title">
-      <div class="container">
-        <header class="section-head" data-reveal>
-          <p class="eyebrow" data-i18n="stats.label">Results</p>
-          <h2 class="section-title" id="stats-title">
-            <span data-i18n="stats.title.lead">Numbers</span>
-            <span class="accent" data-i18n="stats.title.accent">we can stand behind.</span>
-          </h2>
-          <p class="section-lede" data-i18n="stats.body">We test RedFlag against real scam messages people in our community received. We only publish numbers we have measured.</p>
-        </header>
-
-        <div class="stats" data-reveal>
-          <article class="card stat stat-featured" data-reveal-item>
-            <h3 class="stat-label" data-i18n="stats.tested.label">Messages tested</h3>
-            <p data-i18n="stats.tested.text">Real scam and everyday messages, collected and labeled by hand.</p>
-            <div class="stat-panel"><span class="stat-value" id="stat-tested">—</span></div>
-          </article>
-          <article class="card stat" data-reveal-item>
-            <h3 class="stat-label" data-i18n="stats.catch.label">Catch rate</h3>
-            <p data-i18n="stats.catch.text">Share of scam messages RedFlag marked red or yellow.</p>
-            <div class="stat-panel"><span class="stat-value" id="stat-catch">—</span></div>
-          </article>
-          <article class="card stat" data-reveal-item>
-            <p class="stat-big" data-count="4">4</p>
-            <h3 class="stat-label" data-i18n="stats.languages.label">Languages</h3>
-            <p data-i18n="stats.languages.text">English, Ukrainian, Russian and Spanish.</p>
-          </article>
-          <article class="card stat" data-reveal-item>
-            <p class="stat-big" data-count="100" data-count-suffix="%">100%</p>
-            <h3 class="stat-label" data-i18n="stats.private.label">In your browser</h3>
-            <p data-i18n="stats.private.text">Nothing is sent anywhere. It even works offline.</p>
-          </article>
-        </div>
-      </div>
-    </section>
-
-    <section class="ticker" aria-labelledby="ticker-title">
-      <h2 class="visually-hidden" id="ticker-title" data-i18n="ticker.label">Scams RedFlag catches</h2>
-      <div class="ticker-track">
-        <ul class="ticker-list">
-          <li data-i18n="ticker.irs">IRS impersonation</li>
-          <li data-i18n="ticker.gift">Gift card request</li>
-          <li data-i18n="ticker.bank">Fake bank alert</li>
-          <li data-i18n="ticker.grandchild">Grandchild scam</li>
-          <li data-i18n="ticker.phishing">Phishing link</li>
-          <li data-i18n="ticker.delivery">Fake delivery notice</li>
-          <li data-i18n="ticker.prize">Prize you never entered</li>
-          <li data-i18n="ticker.job">Too-good-to-be-true job</li>
+    <section class="catches" aria-labelledby="catches-title">
+      <div class="container catches-inner">
+        <h2 class="catches-title" id="catches-title" data-i18n="catches.title">RedFlag catches scams like</h2>
+        <ul class="catches-list">
+          <li data-i18n="catches.irs">IRS impersonation</li>
+          <li data-i18n="catches.gift">Gift card request</li>
+          <li data-i18n="catches.bank">Fake bank alert</li>
+          <li data-i18n="catches.grandchild">Grandchild scam</li>
+          <li data-i18n="catches.phishing">Phishing link</li>
+          <li data-i18n="catches.delivery">Fake delivery notice</li>
+          <li data-i18n="catches.prize">Prize you never entered</li>
+          <li data-i18n="catches.job">Too-good-to-be-true job</li>
         </ul>
       </div>
     </section>
 
     <section class="section" id="examples" aria-labelledby="examples-title">
       <div class="container">
-        <header class="section-head" data-reveal>
+        <header class="section-head section-head-left">
           <p class="eyebrow" data-i18n="examples.label">Examples</p>
           <h2 class="section-title" id="examples-title">
             <span data-i18n="examples.title.lead">Real scams,</span>
@@ -207,7 +139,7 @@
 
     <section class="section" id="flags" aria-labelledby="flags-title">
       <div class="container flags-grid">
-        <header class="section-head section-head-left" data-reveal>
+        <header class="section-head section-head-left">
           <p class="eyebrow" data-i18n="flags.label">The red flags</p>
           <h2 class="section-title" id="flags-title">
             <span data-i18n="flags.title.lead">Learn the signs.</span>
@@ -216,7 +148,7 @@
           <p class="section-lede" data-i18n="flags.body">Almost every scam uses at least one of these. Once you know them, you will notice them everywhere.</p>
         </header>
 
-        <div class="flag-list" data-reveal>
+        <div class="flag-list">
           <details class="flag-item">
             <summary>
               <span class="flag-number" aria-hidden="true">01</span>
@@ -247,7 +179,7 @@
             <div class="flag-body">
               <p data-i18n="flags.3.text">Fake links copy real company names with small changes, or hide where they go.</p>
               <p class="flag-examples-label" data-i18n="flags.examplesLabel">Phrases to watch for</p>
-              <ul class="chips chips-mono" data-i18n-list="flags.3.examples"></ul>
+              <ul class="chips chips-link" data-i18n-list="flags.3.examples"></ul>
             </div>
           </details>
           <details class="flag-item">
@@ -265,19 +197,142 @@
       </div>
     </section>
 
+    <section class="section" id="how" aria-labelledby="how-title">
+      <div class="container">
+        <header class="section-head section-head-left">
+          <p class="eyebrow" data-i18n="how.label">How it works</p>
+          <h2 class="section-title" id="how-title">
+            <span data-i18n="how.title.lead">Four steps.</span>
+            <span class="accent" data-i18n="how.title.accent">About ten seconds.</span>
+          </h2>
+          <p class="section-lede" data-i18n="how.body">No account, no download, no waiting. The check happens on your own phone or computer.</p>
+        </header>
+
+        <ol class="steps" data-reveal>
+          <li class="card step" data-reveal-item>
+            <div class="step-art" data-art="paste" aria-hidden="true"></div>
+            <div class="step-copy">
+              <span class="step-number" aria-hidden="true">01</span>
+              <h3 data-i18n="how.step1.title">Paste</h3>
+              <p data-i18n="how.step1.text">Copy the text, email or link that worries you and paste it into the box.</p>
+            </div>
+          </li>
+          <li class="card step" data-reveal-item>
+            <div class="step-art" data-art="scan" aria-hidden="true"></div>
+            <div class="step-copy">
+              <span class="step-number" aria-hidden="true">02</span>
+              <h3 data-i18n="how.step2.title">Scan</h3>
+              <p data-i18n="how.step2.text">RedFlag checks it against the tricks scammers use most, in four languages.</p>
+            </div>
+          </li>
+          <li class="card step" data-reveal-item>
+            <div class="step-art" data-art="verdict" aria-hidden="true"></div>
+            <div class="step-copy">
+              <span class="step-number" aria-hidden="true">03</span>
+              <h3 data-i18n="how.step3.title">Verdict</h3>
+              <p data-i18n="how.step3.text">You get a clear answer: red for likely scam, yellow for be careful, green for no signs found.</p>
+            </div>
+          </li>
+          <li class="card step" data-reveal-item>
+            <div class="step-art" data-art="explain" aria-hidden="true"></div>
+            <div class="step-copy">
+              <span class="step-number" aria-hidden="true">04</span>
+              <h3 data-i18n="how.step4.title">Explain</h3>
+              <p data-i18n="how.step4.text">Every warning comes with a plain explanation and what to do next.</p>
+            </div>
+          </li>
+        </ol>
+      </div>
+    </section>
+
+    <section class="section" id="report" aria-labelledby="report-title">
+      <div class="container">
+        <header class="section-head">
+          <p class="eyebrow" data-i18n="report.label">Where to report it</p>
+          <h2 class="section-title" id="report-title">
+            <span data-i18n="report.title.lead">Got a scam message, or already paid?</span>
+            <span class="accent" data-i18n="report.title.accent">Report it. You are not alone.</span>
+          </h2>
+          <p class="section-lede" data-i18n="report.body">Reporting helps stop the people behind it and protects your neighbors. It is never too late, and there is nothing to be ashamed of.</p>
+        </header>
+
+        <div class="report-grid">
+          <article class="card report-card report-urgent">
+            <h3 data-i18n="report.urgent.title">In danger right now?</h3>
+            <p data-i18n="report.urgent.text">If someone is at your door demanding money, or you feel threatened, call 911.</p>
+            <a class="btn btn-primary report-action" href="tel:911" data-i18n="report.urgent.button">Call 911</a>
+          </article>
+          <article class="card report-card">
+            <h3 data-i18n="report.local.title">Your local sheriff or police</h3>
+            <p data-i18n="report.local.text">Call the non-emergency number of your local sheriff’s office or police department. They can take a report and warn others.</p>
+            <a class="btn btn-ghost report-action" id="local-agency-link" hidden></a>
+          </article>
+          <article class="card report-card">
+            <h3 data-i18n="report.elder.title">National Elder Fraud Hotline</h3>
+            <p data-i18n="report.elder.text">Free help for people 60 and older and their families, run by the U.S. Department of Justice.</p>
+            <a class="btn btn-ghost report-action" href="tel:+18333728311">1-833-372-8311</a>
+          </article>
+          <article class="card report-card">
+            <h3 data-i18n="report.online.title">Report it online</h3>
+            <p data-i18n="report.online.text">Tell the Federal Trade Commission. For scams that happened online, also tell the FBI.</p>
+            <div class="btn-row">
+              <a class="btn btn-ghost report-action" href="https://reportfraud.ftc.gov" rel="noopener">reportfraud.ftc.gov</a>
+              <a class="btn btn-ghost report-action" href="https://www.ic3.gov" rel="noopener">ic3.gov</a>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="stats" aria-labelledby="stats-title">
+      <div class="container">
+        <header class="section-head section-head-left">
+          <p class="eyebrow" data-i18n="stats.label">Results</p>
+          <h2 class="section-title" id="stats-title">
+            <span data-i18n="stats.title.lead">Numbers</span>
+            <span class="accent" data-i18n="stats.title.accent">we can stand behind.</span>
+          </h2>
+          <p class="section-lede" data-i18n="stats.body">We test RedFlag against real scam messages people in our community received. We only publish numbers we have measured.</p>
+        </header>
+
+        <div class="stats" data-reveal>
+          <article class="card stat stat-featured" data-reveal-item>
+            <h3 class="stat-label" data-i18n="stats.tested.label">Messages tested</h3>
+            <p data-i18n="stats.tested.text">Real scam and everyday messages, collected and labeled by hand.</p>
+            <div class="stat-panel"><span class="stat-value" id="stat-tested"></span></div>
+          </article>
+          <article class="card stat" data-reveal-item>
+            <h3 class="stat-label" data-i18n="stats.catch.label">Catch rate</h3>
+            <p data-i18n="stats.catch.text">Share of scam messages RedFlag marked red or yellow.</p>
+            <div class="stat-panel"><span class="stat-value" id="stat-catch"></span></div>
+          </article>
+          <article class="card stat" data-reveal-item>
+            <p class="stat-big" data-count="4">4</p>
+            <h3 class="stat-label" data-i18n="stats.languages.label">Languages</h3>
+            <p data-i18n="stats.languages.text">English, Ukrainian, Russian and Spanish.</p>
+          </article>
+          <article class="card stat" data-reveal-item>
+            <p class="stat-big" data-count="100" data-count-suffix="%">100%</p>
+            <h3 class="stat-label" data-i18n="stats.private.label">In your browser</h3>
+            <p data-i18n="stats.private.text">The check runs on your device. Nothing is sent unless you ask the AI.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
     <section class="section" id="source" aria-labelledby="source-title">
       <div class="container source-grid">
-        <header class="section-head section-head-left" data-reveal>
+        <header class="section-head section-head-left">
           <p class="eyebrow" data-i18n="source.label">Open source</p>
           <h2 class="section-title" id="source-title">
             <span data-i18n="source.title.lead">Every rule</span>
             <span class="accent" data-i18n="source.title.accent">is public.</span>
           </h2>
           <p class="section-lede" data-i18n="source.body">RedFlag is free and open source. Anyone can read exactly how it decides, suggest new rules or add samples in their language.</p>
-          <a class="btn btn-primary repo-link" href="https://github.com/Fojikulul/RedFlag" data-i18n="source.button">View the code</a>
+          <a class="btn btn-primary repo-link" href="https://github.com/Fojikulul/RedFlag" rel="noopener" data-i18n="source.button">View the code</a>
         </header>
 
-        <a data-reveal class="browser repo-link" href="https://github.com/Fojikulul/RedFlag" aria-hidden="true" tabindex="-1">
+        <a class="browser repo-link" href="https://github.com/Fojikulul/RedFlag" rel="noopener" aria-hidden="true" tabindex="-1">
           <div class="browser-bar">
             <span class="browser-dots"><i></i><i></i><i></i></span>
             <span class="browser-url">github.com/Fojikulul/RedFlag</span>
@@ -288,11 +343,10 @@
             <ul class="repo-files">
               <li><span class="folder"></span>js/engine</li>
               <li><span class="folder"></span>js/i18n</li>
-              <li><span class="folder"></span>scripts</li>
+              <li><span class="folder"></span>server</li>
               <li><span class="folder"></span>tests</li>
               <li><span class="file"></span>index.html</li>
               <li><span class="file"></span>README.md</li>
-              <li><span class="file"></span>LICENSE</li>
             </ul>
           </div>
         </a>
@@ -301,7 +355,7 @@
 
     <section class="section" id="workshops" aria-labelledby="workshops-title">
       <div class="container">
-        <div class="card workshop" data-reveal>
+        <div class="workshop">
           <div>
             <p class="eyebrow" data-i18n="workshops.label">For workshops</p>
             <h2 class="section-title" id="workshops-title">
@@ -310,7 +364,23 @@
             </h2>
             <p class="section-lede" data-i18n="workshops.body">I run free 30-minute workshops for senior centers, libraries and community groups: how to spot scams, with a live demo and time for everyone to try it.</p>
           </div>
-          <a class="btn btn-primary" id="workshop-link" href="https://github.com/Fojikulul/RedFlag/issues" data-i18n="workshops.button">Ask about a workshop</a>
+          <a class="btn btn-primary" id="workshop-link" href="https://github.com/Fojikulul/RedFlag/issues" rel="noopener" data-i18n="workshops.button">Ask about a workshop</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="faq" aria-labelledby="faq-title">
+      <div class="container faq-grid">
+        <header class="section-head section-head-left">
+          <p class="eyebrow" data-i18n="faq.label">Questions</p>
+          <h2 class="section-title" id="faq-title" data-i18n="faq.title">Good to know</h2>
+        </header>
+        <div class="faq">
+          <details><summary data-i18n="faq.1.q">Does my message get sent anywhere?</summary><p data-i18n="faq.1.a">No.</p></details>
+          <details><summary data-i18n="faq.2.q">Is it really free?</summary><p data-i18n="faq.2.a">Yes.</p></details>
+          <details><summary data-i18n="faq.3.q">Does it work in Ukrainian?</summary><p data-i18n="faq.3.a">Yes.</p></details>
+          <details><summary data-i18n="faq.4.q">What if I already paid?</summary><p data-i18n="faq.4.a">Call your bank.</p></details>
+          <details><summary data-i18n="faq.5.q">Can RedFlag be wrong?</summary><p data-i18n="faq.5.a">Yes.</p></details>
         </div>
       </div>
     </section>
@@ -322,23 +392,7 @@
           <span class="accent" data-i18n="cta.title.accent">before you reply.</span>
         </h2>
         <p class="section-lede" data-i18n="cta.body">It takes ten seconds and it is free, every time.</p>
-        <a class="btn btn-primary btn-large" href="#checker" data-i18n="cta.button">Check a message</a>
-      </div>
-    </section>
-
-    <section class="section" id="faq" aria-labelledby="faq-title">
-      <div class="container faq-grid">
-        <header class="section-head section-head-left" data-reveal>
-          <p class="eyebrow" data-i18n="faq.label">Questions</p>
-          <h2 class="section-title" id="faq-title" data-i18n="faq.title">Good to know</h2>
-        </header>
-        <div class="faq" data-reveal>
-          <details><summary data-i18n="faq.1.q">Does my message get sent anywhere?</summary><p data-i18n="faq.1.a">No. RedFlag runs completely inside your browser.</p></details>
-          <details><summary data-i18n="faq.2.q">Is it really free?</summary><p data-i18n="faq.2.a">Yes.</p></details>
-          <details><summary data-i18n="faq.3.q">Does it work in Ukrainian?</summary><p data-i18n="faq.3.a">Yes, and in Russian and Spanish too.</p></details>
-          <details><summary data-i18n="faq.4.q">What if I already paid?</summary><p data-i18n="faq.4.a">Call your bank, then report it at reportfraud.ftc.gov.</p></details>
-          <details><summary data-i18n="faq.5.q">Can RedFlag be wrong?</summary><p data-i18n="faq.5.a">Yes.</p></details>
-        </div>
+        <a class="btn btn-primary btn-large focus-message" href="#checker" data-i18n="cta.button">Check a message</a>
       </div>
     </section>
   </main>
@@ -348,13 +402,15 @@
       <div class="footer-links">
         <p class="footer-tagline" data-i18n="footer.tagline">Free, private scam checks in four languages.</p>
         <ul>
-          <li><a class="repo-link" href="https://github.com/Fojikulul/RedFlag" data-i18n="footer.github">Source code on GitHub</a></li>
+          <li><a class="repo-link" href="https://github.com/Fojikulul/RedFlag" rel="noopener" data-i18n="footer.github">Source code on GitHub</a></li>
           <li><a href="https://reportfraud.ftc.gov" rel="noopener" data-i18n="footer.report">Report fraud: reportfraud.ftc.gov</a></li>
+          <li><a href="privacy.html" data-i18n="footer.privacy">Privacy</a></li>
+          <li><a href="terms.html" data-i18n="footer.terms">Terms</a></li>
         </ul>
       </div>
 
       <button class="footer-mark wordmark" type="button" id="footer-flag" aria-label="RedFlag">
-        <span aria-hidden="true">redf</span><span class="wordmark-l" aria-hidden="true">l<span class="footer-tooltip" data-i18n="footer.clickMe">Click me!</span><svg class="wordmark-flag" viewBox="0 0 60 30"><path d="M1 3 C17 -3 33 11 59 3 L59 27 C33 35 17 21 1 27 Z"><animate id="flag-wave" attributeName="d" dur="0.9s" begin="indefinite" repeatCount="2" calcMode="spline" keyTimes="0;0.5;1" keySplines=".45 0 .55 1;.45 0 .55 1" values="M1 3 C17 -3 33 11 59 3 L59 27 C33 35 17 21 1 27 Z;M1 3 C17 11 33 -3 59 3 L59 27 C33 21 17 35 1 27 Z;M1 3 C17 -3 33 11 59 3 L59 27 C33 35 17 21 1 27 Z"/></path></svg></span><span aria-hidden="true">ag<span class="wordmark-dot">.</span></span>
+        <span aria-hidden="true">redf</span><span class="wordmark-l" aria-hidden="true">l<svg class="wordmark-flag" viewBox="0 0 60 30"><path d="M1 3 C17 -3 33 11 59 3 L59 27 C33 35 17 21 1 27 Z"><animate id="flag-wave" attributeName="d" dur="0.9s" begin="indefinite" repeatCount="2" calcMode="spline" keyTimes="0;0.5;1" keySplines=".45 0 .55 1;.45 0 .55 1" values="M1 3 C17 -3 33 11 59 3 L59 27 C33 35 17 21 1 27 Z;M1 3 C17 11 33 -3 59 3 L59 27 C33 21 17 35 1 27 Z;M1 3 C17 -3 33 11 59 3 L59 27 C33 35 17 21 1 27 Z"/></path></svg></span><span aria-hidden="true">ag<span class="wordmark-dot">.</span></span>
       </button>
 
       <div class="footer-meta">

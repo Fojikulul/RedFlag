@@ -62,8 +62,8 @@ test('example messages are flagged red in their own language', () => {
 });
 
 test('t fills placeholders and falls back to English', () => {
-  assert.equal(t('result.score', 'en', { score: 85 }), 'Risk 85 of 100');
-  assert.equal(t('result.score', 'xx', { score: 5 }), 'Risk 5 of 100');
+  assert.equal(t('result.score', 'en', { score: 85 }), 'Risk score: 85 out of 100');
+  assert.equal(t('result.score', 'xx', { score: 5 }), 'Risk score: 5 out of 100');
   assert.equal(t('no.such.key', 'en'), 'no.such.key');
 });
 
