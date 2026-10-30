@@ -20,6 +20,8 @@ const state = {
   checkedText: null,
   // The AI answer belongs to one message, so it is kept with that message.
   ai: null,
+  // Result rows the visitor has opened for the current message.
+  openRows: new Set(),
 };
 
 const elements = {
@@ -93,6 +95,7 @@ function setLanguage(lang) {
     if (selected) elements.langCurrent.textContent = option.querySelector('.lang-code').textContent;
   }
 
+  stopReading();
   renderStats();
   renderExamples();
   renderQuiz();
@@ -130,17 +133,39 @@ function uniqueByRule(flags) {
   return [...byRule.values()].sort((a, b) => b.weight - a.weight);
 }
 
-function section(heading, ...children) {
-  const block = el('section');
-  block.append(el('h3', 'result-heading', heading), ...children);
-  return block;
+// A big labelled row that opens on tap. Which rows are open is remembered,
+// so switching language or asking the AI doesn't fold them back up.
+function resultRow(key, title, count, ...content) {
+  const details = el('details', 'result-row');
+  details.open = state.openRows.has(key);
+
+  const summary = el('summary');
+  summary.append(el('span', 'result-row-title', title));
+  if (count !== undefined) summary.append(el('span', 'result-row-count', String(count)));
+
+  const body = el('div', 'result-row-body');
+  body.append(...content);
+  details.append(summary, body);
+
+  details.addEventListener('toggle', () => {
+    if (details.open) state.openRows.add(key);
+    else state.openRows.delete(key);
+  });
+  effects.attachAccordion(details);
+  return details;
 }
 
+// The answer comes first: verdict, the one thing to do now, and two big
+// buttons. Everything else waits behind rows, so nobody has to scroll
+// through four screens to find out what to do.
 function renderResult(text, { announce = true } = {}) {
   const { lang } = state;
   const result = analyze(text);
   const verdictText = t(`result.verdict.${result.verdict}`, lang);
   const summaryText = t(result.summaryKey, lang);
+
+  // When the rules see nothing, a second look matters most, so offer it open.
+  if (announce && result.verdict === 'green' && config.aiEndpoint) state.openRows.add('ai');
 
   const verdict = el('div', `verdict verdict-${result.verdict}`);
   verdict.insertAdjacentHTML('afterbegin', VERDICT_ICONS[result.verdict]);
@@ -155,36 +180,53 @@ function renderResult(text, { announce = true } = {}) {
   verdict.append(verdictCopy);
 
   const body = el('div', 'result-body');
-  body.append(section(t('result.yourMessage', lang), highlightedMessage(text, result.highlights)));
 
-  if (result.flags.length > 0) {
-    const reasons = el('ul', 'flag-reasons');
-    for (const flag of uniqueByRule(result.flags)) {
+  if (result.adviceKeys.length > 0) {
+    const doFirst = el('div', `do-first do-first-${result.verdict}`);
+    doFirst.append(el('p', 'do-first-label', t('result.doFirst', lang)), el('p', 'do-first-text', t(result.adviceKeys[0], lang)));
+    body.append(doFirst);
+  }
+
+  const tools = el('div', 'result-tools');
+  if (speechAvailable()) tools.append(readAloudButton(result, verdictText, summaryText));
+  const again = el('button', 'btn btn-ghost btn-tool', t('result.again', lang));
+  again.type = 'button';
+  again.addEventListener('click', clear);
+  tools.append(again);
+  body.append(tools);
+
+  const rows = el('div', 'result-rows');
+  const reasons = uniqueByRule(result.flags);
+  if (reasons.length > 0) {
+    const list = el('ul', 'flag-reasons');
+    for (const flag of reasons) {
       const item = el('li', 'flag-reason');
       item.append(
         el('span', 'tag', t(`category.${flag.category}`, lang)),
         el('p', '', t(flag.explanationKey, lang)),
         el('p', 'flag-found', t('result.matched', lang, { match: flag.matches.map((m) => `“${m}”`).join(', ') })),
       );
-      reasons.append(item);
+      list.append(item);
     }
-    body.append(section(t('result.flagsTitle', lang), reasons));
+    rows.append(resultRow('why', t('result.flagsTitle', lang), reasons.length, list));
   }
-
-  if (result.links.length > 0) body.append(section(t('result.linksTitle', lang), linkList(result.links)));
 
   const advice = el('ol', 'advice');
   for (const key of result.adviceKeys) advice.append(el('li', '', t(key, lang)));
-  body.append(section(t('result.adviceTitle', lang), advice));
+  rows.append(resultRow('advice', t('result.adviceTitle', lang), result.adviceKeys.length, advice));
 
-  if (config.aiEndpoint) body.append(aiPanel(result.verdict));
+  if (result.links.length > 0) {
+    rows.append(resultRow('links', t('result.linksTitle', lang), result.links.length, linkList(result.links)));
+  }
 
-  const again = el('button', 'btn btn-ghost', t('result.again', lang));
-  again.type = 'button';
-  again.addEventListener('click', clear);
-  const actions = el('div', 'result-actions');
-  actions.append(again);
-  body.append(el('p', 'result-disclaimer', t('result.disclaimer', lang)), actions);
+  rows.append(resultRow('message', t('result.yourMessage', lang), undefined, highlightedMessage(text, result.highlights)));
+
+  if (config.aiEndpoint) {
+    const title = t(result.verdict === 'green' ? 'ai.titleGreen' : 'ai.title', lang);
+    rows.append(resultRow('ai', title, undefined, aiPanel()));
+  }
+
+  body.append(rows, el('p', 'result-disclaimer', t('result.disclaimer', lang)));
 
   elements.result.replaceChildren(verdict, body);
   elements.result.setAttribute('aria-labelledby', 'result-title');
@@ -194,6 +236,55 @@ function renderResult(text, { announce = true } = {}) {
     elements.announcer.textContent = `${verdictText}. ${summaryText}`;
     effects.revealResult(elements.result);
   }
+}
+
+// Read it to me: the verdict and what to do, spoken by the device. Only our
+// own wording is read out, never the pasted message, because some system
+// voices send text to an online service.
+const SPEECH_LANGS = { en: 'en-US', uk: 'uk-UA', ru: 'ru-RU', es: 'es-ES' };
+
+function speechAvailable() {
+  if (!('speechSynthesis' in window)) return false;
+  const voices = window.speechSynthesis.getVoices();
+  // Voices load late in some browsers; an empty list means "not known yet".
+  return voices.length === 0 || voices.some((voice) => voice.lang.toLowerCase().startsWith(state.lang));
+}
+
+function stopReading() {
+  if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+}
+
+function readAloudButton(result, verdictText, summaryText) {
+  const { lang } = state;
+  const button = el('button', 'btn btn-primary btn-tool read-aloud');
+  button.type = 'button';
+  const label = el('span', '', t('result.readAloud', lang));
+  button.insertAdjacentHTML('afterbegin', '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4Z"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></svg>');
+  button.append(label);
+
+  const steps = result.adviceKeys.map((key) => t(key, lang));
+  const script = [verdictText, summaryText, `${t('result.adviceTitle', lang)}:`, ...steps].join(' ');
+
+  button.addEventListener('click', () => {
+    if (window.speechSynthesis.speaking) {
+      stopReading();
+      return;
+    }
+    const utterance = new SpeechSynthesisUtterance(script);
+    utterance.lang = SPEECH_LANGS[lang];
+    utterance.rate = 0.9;
+    const reset = () => {
+      label.textContent = t('result.readAloud', state.lang);
+      button.setAttribute('aria-pressed', 'false');
+    };
+    utterance.onend = reset;
+    utterance.onerror = reset;
+    label.textContent = t('result.stopReading', lang);
+    button.setAttribute('aria-pressed', 'true');
+    window.speechSynthesis.speak(utterance);
+  });
+  button.setAttribute('aria-pressed', 'false');
+  return button;
 }
 
 // Each web address in the message, and what is wrong with it in plain words.
@@ -284,7 +375,7 @@ function renderQuiz() {
 // AI second opinion. Opt-in per message, because it is the one time the
 // text leaves the device.
 
-function aiPanel(ruleVerdict) {
+function aiPanel() {
   const { lang } = state;
   const panel = el('section', 'ai-panel');
   panel.setAttribute('aria-live', 'polite');
@@ -310,11 +401,7 @@ function aiPanel(ruleVerdict) {
     return panel;
   }
 
-  // A green verdict is when a second look matters most, so say so.
-  panel.append(
-    el('h3', '', t(ruleVerdict === 'green' ? 'ai.titleGreen' : 'ai.title', lang)),
-    el('p', '', t('ai.text', lang)),
-  );
+  panel.append(el('p', '', t('ai.text', lang)));
   if (state.ai?.status === 'error') panel.append(el('p', 'tool-error', t(state.ai.messageKey, lang)));
 
   const button = el('button', 'btn btn-primary', t('ai.button', lang));
@@ -376,6 +463,8 @@ function check() {
   elements.pasteError.hidden = true;
   state.checkedText = text;
   state.ai = null;
+  state.openRows = new Set();
+  stopReading();
 
   effects.scan(elements.field);
   renderResult(text);
@@ -402,6 +491,8 @@ function clear() {
   elements.announcer.textContent = '';
   state.checkedText = null;
   state.ai = null;
+  state.openRows = new Set();
+  stopReading();
   focusMessage();
 }
 

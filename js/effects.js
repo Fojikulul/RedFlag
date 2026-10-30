@@ -40,7 +40,8 @@ function observerWorks() {
 // entrance is forced to its end state shortly after it should have finished.
 function enter(targets, keyframes, options = {}) {
   const animation = motion.animate(targets, keyframes, options);
-  const delay = typeof options.delay === 'number' ? options.delay : 0.6;
+  // Staggered delays are functions; allow for the longest likely stagger.
+  const delay = typeof options.delay === 'function' ? 0.6 : options.delay ?? 0;
   const deadline = ((options.duration ?? 0.4) + delay + 0.5) * 1000;
 
   // Resolves when the animation ends or the deadline passes, whichever is
@@ -102,32 +103,34 @@ export function revealResult(result) {
   }
 }
 
-/** Smoothly opens and closes <details> elements instead of snapping. */
+/** Smoothly opens and closes a <details> element instead of snapping. */
+export function attachAccordion(details) {
+  const summary = details.querySelector('summary');
+  const body = summary?.nextElementSibling;
+  if (!body) return;
+
+  summary.addEventListener('click', (event) => {
+    if (!enabled) return;
+    event.preventDefault();
+
+    if (details.open) {
+      enter(body, { height: [`${body.offsetHeight}px`, '0px'], opacity: [1, 0] }, { duration: 0.25, ease: EASE }).then(() => {
+        details.open = false;
+        body.style.height = '';
+        body.style.opacity = '';
+      });
+    } else {
+      details.open = true;
+      const height = body.scrollHeight;
+      enter(body, { height: ['0px', `${height}px`], opacity: [0, 1] }, { duration: 0.3, ease: EASE }).then(() => {
+        body.style.height = '';
+      });
+    }
+  });
+}
+
 export function setUpAccordions(selector) {
-  for (const details of document.querySelectorAll(selector)) {
-    const summary = details.querySelector('summary');
-    const body = summary.nextElementSibling;
-    if (!body) continue;
-
-    summary.addEventListener('click', (event) => {
-      if (!enabled) return;
-      event.preventDefault();
-
-      if (details.open) {
-        enter(body, { height: [`${body.offsetHeight}px`, '0px'], opacity: [1, 0] }, { duration: 0.25, ease: EASE }).then(() => {
-          details.open = false;
-          body.style.height = '';
-          body.style.opacity = '';
-        });
-      } else {
-        details.open = true;
-        const height = body.scrollHeight;
-        enter(body, { height: ['0px', `${height}px`], opacity: [0, 1] }, { duration: 0.3, ease: EASE }).then(() => {
-          body.style.height = '';
-        });
-      }
-    });
-  }
+  for (const details of document.querySelectorAll(selector)) attachAccordion(details);
 }
 
 /** Fades groups of cards in as they scroll into view. Headings never hide. */

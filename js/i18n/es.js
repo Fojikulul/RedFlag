@@ -29,8 +29,8 @@ export default {
   'result.verdict.yellow': 'Tenga cuidado',
   'result.verdict.green': 'No encontramos señales de alerta',
   'result.score': 'Nivel de riesgo: {score} de 100',
-  'result.yourMessage': 'Su mensaje',
-  'result.flagsTitle': 'Por qué',
+  'result.yourMessage': 'Su mensaje, con las señales marcadas',
+  'result.flagsTitle': 'Por qué lo pensamos',
   'result.adviceTitle': 'Qué hacer',
   'result.disclaimer': 'RedFlag usa reglas sencillas y puede equivocarse. Si tiene dudas, pregunte a alguien de confianza.',
   'result.matched': 'Encontrado: {match}',
@@ -278,4 +278,8 @@ export default {
   'quiz.3.why': 'Su banco nunca le pedirá un código por teléfono o mensaje. Ese código le da acceso a su cuenta.',
   'quiz.4.text': 'Hola mamá, ya aterricé. Te llamo esta noche después de cenar. ¡Te quiero!',
   'quiz.4.why': 'No le piden nada: ni dinero, ni enlace, ni secreto. Un mensaje familiar normal.',
+
+  'result.doFirst': 'Haga esto ahora',
+  'result.readAloud': 'Léamelo en voz alta',
+  'result.stopReading': 'Dejar de leer',
 };

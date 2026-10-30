@@ -29,8 +29,8 @@ export default {
   'result.verdict.yellow': 'Be careful',
   'result.verdict.green': 'No red flags found',
   'result.score': 'Risk score: {score} out of 100',
-  'result.yourMessage': 'Your message',
-  'result.flagsTitle': 'Why',
+  'result.yourMessage': 'Your message, with the warning signs marked',
+  'result.flagsTitle': 'Why we think so',
   'result.adviceTitle': 'What to do',
   'result.disclaimer': 'RedFlag uses simple rules and can be wrong. When in doubt, ask someone you trust.',
   'result.matched': 'Found: {match}',
@@ -278,4 +278,8 @@ export default {
   'quiz.3.why': 'Your bank will never ask for a code by phone or text. That code lets someone into your account.',
   'quiz.4.text': 'Hi Mom, I landed safely. I’ll call you tonight after dinner. Love you!',
   'quiz.4.why': 'Nothing is asked of you: no money, no link, no secret. A normal family message.',
+
+  'result.doFirst': 'Do this now',
+  'result.readAloud': 'Read it to me',
+  'result.stopReading': 'Stop reading',
 };
