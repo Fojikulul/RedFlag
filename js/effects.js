@@ -168,12 +168,14 @@ export async function setUpCounters() {
   }
 }
 
-// SVG parts scale and turn around a fixed point: their own center, or the
-// center of the drawing.
-function pinTransform(nodes, origin) {
+// SVG parts scale and turn around their own center. Motion always switches
+// SVG elements to transform-box: fill-box, so a pivot given in drawing
+// coordinates would land somewhere else; parts that turn around the drawing's
+// center are built to be centered on it instead (see art.js).
+function pinTransform(nodes) {
   for (const node of nodes) {
-    node.style.transformBox = origin === 'self' ? 'fill-box' : 'view-box';
-    node.style.transformOrigin = origin === 'self' ? 'center' : origin;
+    node.style.transformBox = 'fill-box';
+    node.style.transformOrigin = 'center';
   }
 }
 
@@ -186,9 +188,9 @@ const STEP_ANIMATIONS = {
     const rings = art.querySelectorAll('[data-part="ring"]');
     const sweep = art.querySelectorAll('[data-part="sweep"]');
     const blip = art.querySelectorAll('[data-part="blip"]');
-    pinTransform(rings, 'self');
-    pinTransform(sweep, '100px 100px');
-    pinTransform(blip, 'self');
+    pinTransform(rings);
+    pinTransform(sweep);
+    pinTransform(blip);
     return [
       enter(rings, { opacity: [0, 1], scale: [0.4, 1] }, { delay: motion.stagger(0.08), duration: 0.4, ease: EASE }),
       enter(sweep, { rotate: [0, 360] }, { delay: 0.4, duration: 1.3, ease: 'easeInOut' }),
@@ -198,7 +200,7 @@ const STEP_ANIMATIONS = {
   verdict(art) {
     const ring = art.querySelectorAll('[data-part="draw"]');
     const burst = art.querySelectorAll('[data-part="burst"]');
-    pinTransform(burst, '100px 100px');
+    pinTransform(burst);
     return [
       enter(ring, { strokeDashoffset: [1, 0] }, { duration: 0.7, ease: EASE }),
       enter(burst, { opacity: [0, 1], scale: [0.3, 1] }, { delay: 0.6, duration: 0.5, ease: EASE }),
@@ -207,7 +209,7 @@ const STEP_ANIMATIONS = {
   explain(art) {
     const dots = art.querySelectorAll('[data-part="pop"]');
     const lines = art.querySelectorAll('[data-part="draw"]');
-    pinTransform(dots, 'self');
+    pinTransform(dots);
     return [
       enter(dots, { opacity: [0, 1], scale: [0, 1] }, { delay: motion.stagger(0.35), duration: 0.3, ease: EASE }),
       enter(lines, { strokeDashoffset: [1, 0] }, { delay: motion.stagger(0.35, { startDelay: 0.15 }), duration: 0.4, ease: EASE }),
