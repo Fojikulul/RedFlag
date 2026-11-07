@@ -4,9 +4,11 @@ export default {
   // Shown on the workshop button. Leave empty to link to GitHub issues instead.
   contactEmail: '',
 
-  // The Cloudflare Worker from server/ that holds the API key. Leave empty to
-  // hide the "Ask the AI" option entirely.
-  aiEndpoint: '',
+  // The AI check from server/. Every message is checked by the rules on the
+  // device and by the AI here, and the AI leads the verdict. '/api/check'
+  // works when the site is served by that Worker; use the Worker's full URL
+  // when the site is hosted somewhere else. Leave empty for rules only.
+  aiEndpoint: '/api/check',
 
   // A partnering sheriff's office or police department. When both are set,
   // the "Where to report it" section shows a button to call them.

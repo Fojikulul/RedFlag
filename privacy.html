@@ -25,21 +25,16 @@
     <p class="draft-note">Draft. This page describes how the site works today. It has not been reviewed by a lawyer yet.</p>
 
     <h2>The short version</h2>
-    <p>RedFlag checks your message inside your own browser. We do not collect, store or sell the messages you check, and we do not ask who you are.</p>
+    <p>RedFlag checks your message with simple rules in your own browser and with an AI on our server. We do not store or sell the messages you check, and we do not ask who you are.</p>
 
     <h2>Messages you check</h2>
     <ul>
-      <li>When you press <strong>Check it</strong>, the message is analyzed by code running on your phone or computer. It is not sent anywhere.</li>
-      <li>The message is gone when you close or reload the page.</li>
-    </ul>
-
-    <h2>The AI second opinion (optional)</h2>
-    <p>If you press <strong>Ask the AI</strong>, that one message is sent over an encrypted connection to our server, which passes it to Anthropic's AI service to be checked, and returns the answer to you.</p>
-    <ul>
-      <li>Our server does not save or log the message.</li>
-      <li>Anthropic processes the message to produce the answer under its own commercial terms and privacy policy.</li>
+      <li>When you press <strong>Check it</strong>, the message is checked in two ways at once: by rules running on your phone or computer, and by an AI.</li>
+      <li>For the AI check, the message is sent over an encrypted connection to our server on Cloudflare, which asks Cloudflare's AI service (Workers AI) about it and returns the answer to you.</li>
+      <li>Our server does not save or log the message. Cloudflare processes it to produce the answer under its own terms and privacy policy, and says it does not use it to train AI models.</li>
       <li>To limit misuse, our server counts how many checks come from each internet address per minute. It does not keep that address after the limit resets.</li>
-      <li>Nothing is sent unless you press the button.</li>
+      <li>If the AI can't be reached, the rules on your device answer alone, and the page says so.</li>
+      <li>The message is gone when you close or reload the page.</li>
     </ul>
 
     <h2>Settings saved on your device</h2>

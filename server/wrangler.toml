@@ -1,12 +1,26 @@
-name = "redflag-ai"
+name = "redflag"
 main = "src/index.js"
 compatibility_date = "2026-10-01"
 
+# The whole site is served from the repository root. .assetsignore there
+# keeps the server code, tests and scripts from being published.
+[assets]
+directory = "../"
+binding = "ASSETS"
+
+# Cloudflare Workers AI. On the Workers Free plan it is free up to a daily
+# allowance and then stops working until midnight UTC; it never bills.
+[ai]
+binding = "AI"
+
 [vars]
-# Pages allowed to call this Worker, comma separated.
-ALLOWED_ORIGINS = "https://fojikulul.github.io,http://localhost:8080,http://127.0.0.1:8080"
-# Leave empty for the default model. claude-haiku-5-5 is much cheaper.
+# "workers-ai" (free) or "claude" (paid, needs the ANTHROPIC_API_KEY secret).
+AI_PROVIDER = "workers-ai"
+# Leave empty for the default model of the chosen provider.
 MODEL = ""
+# Other sites allowed to call /api/check, comma separated. The site's own
+# pages are always allowed.
+ALLOWED_ORIGINS = "https://fojikulul.github.io,http://localhost:8080,http://127.0.0.1:8080"
 
 [[ratelimits]]
 name = "RATE_LIMITER"

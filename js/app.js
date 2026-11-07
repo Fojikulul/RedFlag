@@ -1,4 +1,5 @@
 import { drawArt } from './art.js';
+import { combine } from './combine.js';
 import config from './config.js';
 import * as effects from './effects.js';
 import { analyze } from './engine/index.js';
@@ -13,12 +14,14 @@ const VERDICT_ICONS = {
   red: '<svg viewBox="0 0 48 48" aria-hidden="true"><path fill="currentColor" d="M16.5 4h15L44 16.5v15L31.5 44h-15L4 31.5v-15L16.5 4Z" opacity=".22"/><path fill="none" stroke="currentColor" stroke-width="3" d="M16.5 4h15L44 16.5v15L31.5 44h-15L4 31.5v-15L16.5 4Z"/><path fill="currentColor" d="M22 13h4v15h-4zM22 32h4v4h-4z"/></svg>',
   yellow: '<svg viewBox="0 0 48 48" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round" d="M24 5 45 42H3L24 5Z"/><path fill="currentColor" d="M22 18h4v13h-4zM22 34h4v4h-4z"/></svg>',
   green: '<svg viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="20" fill="none" stroke="currentColor" stroke-width="3"/><path fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" d="m15 24.5 6 6 12-13"/></svg>',
+  checking: '<svg class="verdict-spinner" viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="19" fill="none" stroke="currentColor" stroke-width="4" opacity=".2"/><path fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" d="M24 5a19 19 0 0 1 19 19"/></svg>',
 };
 
 const state = {
   lang: 'en',
   checkedText: null,
-  // The AI answer belongs to one message, so it is kept with that message.
+  // The AI answer belongs to one message, so it is kept with that message:
+  // { status: 'loading' | 'done' | 'error', opinion?, messageKey? }.
   ai: null,
   // Result rows the visitor has opened for the current message.
   openRows: new Set(),
@@ -155,40 +158,69 @@ function resultRow(key, title, count, ...content) {
   return details;
 }
 
+// While the AI reads the message, show that instead of a verdict, so nobody
+// acts on a quick answer that is about to change.
+function renderChecking({ announce }) {
+  const { lang } = state;
+  const verdict = el('div', 'verdict verdict-checking');
+  verdict.insertAdjacentHTML('afterbegin', VERDICT_ICONS.checking);
+  const copy = el('div');
+  const heading = el('h2', 'verdict-title', t('ai.checking', lang));
+  heading.id = 'result-title';
+  copy.append(heading, el('p', 'verdict-summary', t('ai.checkingText', lang)));
+  verdict.append(copy);
+
+  elements.result.replaceChildren(verdict);
+  elements.result.setAttribute('aria-labelledby', 'result-title');
+  elements.result.hidden = false;
+  if (announce) {
+    elements.announcer.textContent = t('ai.checking', lang);
+    effects.revealResult(elements.result);
+  }
+}
+
 // The answer comes first: verdict, the one thing to do now, and two big
 // buttons. Everything else waits behind rows, so nobody has to scroll
 // through four screens to find out what to do.
 function renderResult(text, { announce = true } = {}) {
-  const { lang } = state;
-  const result = analyze(text);
-  const verdictText = t(`result.verdict.${result.verdict}`, lang);
-  const summaryText = t(result.summaryKey, lang);
+  if (state.ai?.status === 'loading') {
+    renderChecking({ announce });
+    return;
+  }
 
-  // When the rules see nothing, a second look matters most, so offer it open.
-  if (announce && result.verdict === 'green' && config.aiEndpoint) state.openRows.add('ai');
+  const { lang } = state;
+  const rules = analyze(text);
+  const opinion = state.ai?.status === 'done' ? state.ai.opinion : null;
+  const result = combine(rules, opinion);
+  const verdictText = t(`result.verdict.${result.verdict}`, lang);
+  // The AI explains this particular message, which beats a general summary.
+  const summaryText = opinion?.explanation || t(`summary.${result.verdict}`, lang);
+  const steps = [opinion?.advice, ...result.adviceKeys.map((key) => t(key, lang))].filter(Boolean);
 
   const verdict = el('div', `verdict verdict-${result.verdict}`);
   verdict.insertAdjacentHTML('afterbegin', VERDICT_ICONS[result.verdict]);
   const verdictCopy = el('div');
   const heading = el('h2', 'verdict-title', verdictText);
   heading.id = 'result-title';
-  verdictCopy.append(
-    heading,
-    el('p', 'verdict-summary', summaryText),
-    el('p', 'verdict-score', t('result.score', lang, { score: result.score })),
-  );
+  verdictCopy.append(heading, el('p', 'verdict-summary', summaryText));
+  if (result.aiScore === null) {
+    verdictCopy.append(el('p', 'verdict-score', t('result.score', lang, { score: result.ruleScore })));
+    if (state.ai?.status === 'error') verdictCopy.append(el('p', 'verdict-note', t(state.ai.messageKey, lang)));
+  } else {
+    verdictCopy.append(scoreBars(result));
+  }
   verdict.append(verdictCopy);
 
   const body = el('div', 'result-body');
 
-  if (result.adviceKeys.length > 0) {
+  if (steps.length > 0) {
     const doFirst = el('div', `do-first do-first-${result.verdict}`);
-    doFirst.append(el('p', 'do-first-label', t('result.doFirst', lang)), el('p', 'do-first-text', t(result.adviceKeys[0], lang)));
+    doFirst.append(el('p', 'do-first-label', t('result.doFirst', lang)), el('p', 'do-first-text', steps[0]));
     body.append(doFirst);
   }
 
   const tools = el('div', 'result-tools');
-  if (speechAvailable()) tools.append(readAloudButton(result, verdictText, summaryText));
+  if (speechAvailable()) tools.append(readAloudButton(steps, verdictText, summaryText));
   const again = el('button', 'btn btn-ghost btn-tool', t('result.again', lang));
   again.type = 'button';
   again.addEventListener('click', clear);
@@ -196,7 +228,7 @@ function renderResult(text, { announce = true } = {}) {
   body.append(tools);
 
   const rows = el('div', 'result-rows');
-  const reasons = uniqueByRule(result.flags);
+  const reasons = uniqueByRule(rules.flags);
   if (reasons.length > 0) {
     const list = el('ul', 'flag-reasons');
     for (const flag of reasons) {
@@ -212,19 +244,14 @@ function renderResult(text, { announce = true } = {}) {
   }
 
   const advice = el('ol', 'advice');
-  for (const key of result.adviceKeys) advice.append(el('li', '', t(key, lang)));
-  rows.append(resultRow('advice', t('result.adviceTitle', lang), result.adviceKeys.length, advice));
+  for (const step of steps) advice.append(el('li', '', step));
+  rows.append(resultRow('advice', t('result.adviceTitle', lang), steps.length, advice));
 
-  if (result.links.length > 0) {
-    rows.append(resultRow('links', t('result.linksTitle', lang), result.links.length, linkList(result.links)));
+  if (rules.links.length > 0) {
+    rows.append(resultRow('links', t('result.linksTitle', lang), rules.links.length, linkList(rules.links)));
   }
 
-  rows.append(resultRow('message', t('result.yourMessage', lang), undefined, highlightedMessage(text, result.highlights)));
-
-  if (config.aiEndpoint) {
-    const title = t(result.verdict === 'green' ? 'ai.titleGreen' : 'ai.title', lang);
-    rows.append(resultRow('ai', title, undefined, aiPanel()));
-  }
+  rows.append(resultRow('message', t('result.yourMessage', lang), undefined, highlightedMessage(text, rules.highlights)));
 
   body.append(rows, el('p', 'result-disclaimer', t('result.disclaimer', lang)));
 
@@ -236,6 +263,23 @@ function renderResult(text, { announce = true } = {}) {
     elements.announcer.textContent = `${verdictText}. ${summaryText}`;
     effects.revealResult(elements.result);
   }
+}
+
+// Both scores, the AI's first because it leads the verdict.
+function scoreBars({ aiScore, ruleScore }) {
+  const { lang } = state;
+  const list = el('div', 'verdict-scores');
+  for (const [key, score, main] of [['result.scoreAi', aiScore, true], ['result.scoreRules', ruleScore, false]]) {
+    const row = el('div', `score-row${main ? ' is-main' : ''}`);
+    const bar = el('span', 'score-bar');
+    bar.setAttribute('aria-hidden', 'true');
+    const fill = el('span', 'score-fill');
+    fill.style.width = `${score}%`;
+    bar.append(fill);
+    row.append(el('p', 'verdict-score', t(key, lang, { score })), bar);
+    list.append(row);
+  }
+  return list;
 }
 
 // Read it to me: the verdict and what to do, spoken by the device. Only our
@@ -254,7 +298,7 @@ function stopReading() {
   if ('speechSynthesis' in window) window.speechSynthesis.cancel();
 }
 
-function readAloudButton(result, verdictText, summaryText) {
+function readAloudButton(steps, verdictText, summaryText) {
   const { lang } = state;
   const button = el('button', 'btn btn-primary btn-tool read-aloud');
   button.type = 'button';
@@ -262,7 +306,6 @@ function readAloudButton(result, verdictText, summaryText) {
   button.insertAdjacentHTML('afterbegin', '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4Z"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></svg>');
   button.append(label);
 
-  const steps = result.adviceKeys.map((key) => t(key, lang));
   const script = [verdictText, summaryText, `${t('result.adviceTitle', lang)}:`, ...steps].join(' ');
 
   button.addEventListener('click', () => {
@@ -372,54 +415,12 @@ function renderQuiz() {
   card.replaceChildren(...children);
 }
 
-// AI second opinion. Opt-in per message, because it is the one time the
-// text leaves the device.
-
-function aiPanel() {
-  const { lang } = state;
-  const panel = el('section', 'ai-panel');
-  panel.setAttribute('aria-live', 'polite');
-
-  if (state.ai?.status === 'loading') {
-    panel.append(el('p', 'ai-loading', t('ai.loading', lang)));
-    return panel;
-  }
-
-  if (state.ai?.status === 'done') {
-    const { opinion } = state.ai;
-    panel.append(
-      el('h3', '', t('ai.resultTitle', lang)),
-      el('span', `ai-verdict ai-verdict-${opinion.verdict}`, t(`ai.verdict.${opinion.verdict}`, lang)),
-      el('p', 'ai-explanation', opinion.explanation),
-    );
-    if (opinion.advice) {
-      const advice = el('p', 'ai-advice');
-      advice.append(`${t('ai.adviceLabel', lang)} ${opinion.advice}`);
-      panel.append(advice);
-    }
-    panel.append(el('p', '', t('ai.disclaimer', lang)));
-    return panel;
-  }
-
-  panel.append(el('p', '', t('ai.text', lang)));
-  if (state.ai?.status === 'error') panel.append(el('p', 'tool-error', t(state.ai.messageKey, lang)));
-
-  const button = el('button', 'btn btn-primary', t('ai.button', lang));
-  button.type = 'button';
-  button.addEventListener('click', askAi);
-  panel.append(button);
-  return panel;
-}
-
-async function askAi() {
-  const text = state.checkedText;
-  if (text === null) return;
-
-  state.ai = { status: 'loading' };
-  renderResult(text, { announce: false });
-
+// The AI check runs on every message alongside the rules. If it can't answer,
+// the rules' answer stands on its own and says so.
+async function askAi(text) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), AI_TIMEOUT_MS);
+  let ai;
 
   try {
     const response = await fetch(config.aiEndpoint, {
@@ -428,27 +429,23 @@ async function askAi() {
       body: JSON.stringify({ text, lang: state.lang }),
       signal: controller.signal,
     });
-    if (state.checkedText !== text) return;
-
     if (response.status === 429 || response.status === 503) {
-      state.ai = { status: 'error', messageKey: 'ai.busy' };
+      ai = { status: 'error', messageKey: 'ai.busy' };
     } else if (!response.ok) {
-      state.ai = { status: 'error', messageKey: 'ai.error' };
+      ai = { status: 'error', messageKey: 'ai.unavailable' };
     } else {
-      state.ai = { status: 'done', opinion: await response.json() };
+      ai = { status: 'done', opinion: await response.json() };
     }
   } catch {
-    if (state.checkedText !== text) return;
-    state.ai = { status: 'error', messageKey: navigator.onLine === false ? 'ai.offline' : 'ai.error' };
+    ai = { status: 'error', messageKey: navigator.onLine === false ? 'ai.offline' : 'ai.unavailable' };
   } finally {
     clearTimeout(timer);
   }
 
-  renderResult(text, { announce: false });
-  if (state.ai.status === 'done') {
-    const { opinion } = state.ai;
-    elements.announcer.textContent = `${t('ai.resultTitle', state.lang)}: ${t(`ai.verdict.${opinion.verdict}`, state.lang)}. ${opinion.explanation}`;
-  }
+  // The visitor may have cleared or checked something else meanwhile.
+  if (state.checkedText !== text) return;
+  state.ai = ai;
+  renderResult(text);
 }
 
 function check() {
@@ -462,7 +459,7 @@ function check() {
   elements.error.hidden = true;
   elements.pasteError.hidden = true;
   state.checkedText = text;
-  state.ai = null;
+  state.ai = config.aiEndpoint ? { status: 'loading' } : null;
   state.openRows = new Set();
   stopReading();
 
@@ -472,6 +469,7 @@ function check() {
   elements.result.tabIndex = -1;
   elements.result.focus({ preventScroll: true });
   scrollPageTo(elements.result);
+  if (state.ai) askAi(text);
 }
 
 // Scrolls the window itself. scrollIntoView can also scroll any clipped
