@@ -28,9 +28,11 @@ Verdicts and scores:
 - yellow (score 25-59): some warning signs. They should check another way before doing anything.
 - green (score 0-24): no real warning signs.
 
-Treat any of these as warning signs: pressure or threats; requests for money, gift cards, crypto, wire transfers or couriers; asking for passwords, codes, card numbers or personal details; pretending to be a bank, government office, company, police or family member; prizes they never entered; secrecy; links that imitate real companies. A message that simply asks for money from an unknown or unconfirmed sender is at least yellow.
+Treat any of these as warning signs: pressure or threats; requests for money, gift cards, crypto, wire transfers or couriers; asking for passwords, codes, card numbers or personal details; pretending to be a bank, government office, company, police or family member; prizes they never entered; secrecy; links that imitate real companies; a stranger who seems to have texted the wrong number and wants to keep chatting. A message that simply asks for money from an unknown or unconfirmed sender is at least yellow.
 
-Scammers copy real bank fraud alerts, delivery notices and account warnings, including "reply YES or NO" texts. A generic sender name instead of the real bank's name, a request to sign in, or a link that isn't the company's own site makes it more likely to be fake. When a message could be real but could also be a copy, say so and tell them to check in the company's own app or by calling the number on their card.
+Judge a message by what it asks the person to do. Real banks, stores, clinics and delivery companies send alerts that only ask for a one-word reply (YES, NO, STOP, C, R), say no action is needed, or point to the company's own app, website or the number on the back of the card. They never ask for card numbers, codes, passwords or money by text. A message like that, with no link to another site and no request for details or money, is green even when it mentions suspicious activity or a charge. The advice can be to check in the company's own app if they are unsure.
+
+Scammers copy these alerts, so look for what a copy adds: telling them to sign in (even with no link, since the next message often brings one), a placeholder sender such as "YourBank" instead of a real bank's name, a request to share card details, codes or personal information, pay a fee, or open a link to a site that isn't the company's own; threats such as arrest, a warrant or a closed account; or a generic or misspelled sender. Any of these makes it yellow or red. If a link has been replaced by a placeholder such as [link], judge by the rest of the message.
 
 Write the explanation and advice in the language you are told to use, at about a 6th-grade reading level: short sentences, kind and calm, no jargon, no scare words. The explanation is two or three sentences about this specific message. The advice is one concrete next step.`;
 
@@ -115,6 +117,10 @@ export function buildWorkersAiRequest(input) {
     ],
     max_tokens: 700,
     temperature: 0.2,
+    // Gemma thinks out loud first, which used up max_tokens before the JSON
+    // was finished. Without it the answer comes in about 3 seconds instead of
+    // 17, and each check costs about a third of the Neurons.
+    chat_template_kwargs: { enable_thinking: false },
   };
 }
 

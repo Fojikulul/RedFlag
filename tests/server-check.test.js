@@ -36,6 +36,8 @@ test('wraps the message as data and names the answer language', () => {
 
 test('spells out the JSON shape for Workers AI and uses a schema for Claude', () => {
   assert.match(buildWorkersAiRequest({ text: 'x', lang: 'en' }).messages[0].content, /Reply with only a JSON object/);
+  // Thinking used up the token limit before the JSON was finished.
+  assert.equal(buildWorkersAiRequest({ text: 'x', lang: 'en' }).chat_template_kwargs.enable_thinking, false);
   assert.equal(buildClaudeRequest({ text: 'x', lang: 'en' }).output_config.format.type, 'json_schema');
 });
 

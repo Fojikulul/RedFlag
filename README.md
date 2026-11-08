@@ -99,7 +99,7 @@ npm run deploy
 
 The site is then live at `https://redflag.<your-account>.workers.dev`. A custom domain can be added in the Cloudflare dashboard.
 
-**Cost.** By default the AI is Cloudflare Workers AI (`AI_PROVIDER = "workers-ai"`), with `@cf/google/gemma-4-26b-a4b-it`. On the Workers Free plan it includes 10,000 Neurons a day, roughly 500-800 checks depending on message length (an estimate from the model's published price), and when they run out it stops until midnight UTC instead of billing. RedFlag then answers with its rules alone. Stay on the Free plan and it can't cost anything. (On Workers Paid, extra use is billed, so set a budget alert there.) Each visitor can run 10 checks a minute.
+**Cost.** By default the AI is Cloudflare Workers AI (`AI_PROVIDER = "workers-ai"`), with `@cf/google/gemma-4-26b-a4b-it`. On the Workers Free plan it includes 10,000 Neurons a day, roughly 1,000 checks depending on message length (a short message used about 8 Neurons in testing), and when they run out it stops until midnight UTC instead of billing. RedFlag then answers with its rules alone. Stay on the Free plan and it can't cost anything. (On Workers Paid, extra use is billed, so set a budget alert there.) Each visitor can run 10 checks a minute.
 
 `MODEL` in `wrangler.toml` picks another Workers AI model. Pick one that is available on the Free plan and handles all four languages.
 
