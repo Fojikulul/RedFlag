@@ -1561,12 +1561,18 @@ mark {
   color: var(--muted);
 }
 
+/* The number box sits at the bottom of the card, so boxes in cards side by
+   side line up even when their descriptions are different lengths. */
+.stat:has(.stat-panel) {
+  grid-template-rows: auto auto 1fr;
+}
+
 .stat-panel {
   display: flex;
   align-items: center;
   justify-content: center;
+  align-self: end;
   gap: 12px;
-  margin-top: auto;
   min-height: 88px;
   padding: 18px 22px;
   border-radius: var(--radius-sm);
