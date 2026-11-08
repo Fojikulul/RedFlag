@@ -2,7 +2,7 @@ export default {
   repoUrl: 'https://github.com/Fojikulul/RedFlag',
 
   // Shown on the workshop button. Leave empty to link to GitHub issues instead.
-  contactEmail: '',
+  contactEmail: 'dovzhenokvasya@gmail.com',
 
   // The AI check from server/. Every message is checked by the rules on the
   // device and by the AI here, and the AI leads the verdict. '/api/check'
