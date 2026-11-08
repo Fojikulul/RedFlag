@@ -545,6 +545,35 @@ function renderStats() {
   const { messagesTested, catchRate } = config.stats;
   setStat('stat-tested', messagesTested === null ? null : String(messagesTested));
   setStat('stat-catch', catchRate === null ? null : `${Math.round(catchRate)}%`);
+  renderUsage();
+}
+
+// How many messages people have checked, from the Worker's daily counts.
+// Stays hidden until the count is worth showing or if it can't be loaded.
+let usage = null;
+
+async function loadUsage() {
+  if (!config.usageEndpoint) return;
+  try {
+    const response = await fetch(config.usageEndpoint);
+    if (!response.ok) return;
+    usage = await response.json();
+    renderUsage();
+  } catch {
+    // Offline or not served by the Worker: leave the card hidden.
+  }
+}
+
+function renderUsage() {
+  const card = document.getElementById('stat-usage');
+  if (!usage || usage.checked < config.usageMinToShow) {
+    card.hidden = true;
+    return;
+  }
+  const { lang } = state;
+  document.getElementById('stat-usage-checked').textContent = usage.checked.toLocaleString(lang);
+  document.getElementById('stat-usage-warned').textContent = t('stats.usage.warned', lang, { count: usage.warned.toLocaleString(lang) });
+  card.hidden = false;
 }
 
 function setStat(id, value) {
@@ -711,6 +740,7 @@ function init() {
   effects.setUpWordmark(elements.footerFlag);
 
   setInterval(updateClock, 30_000);
+  loadUsage();
 }
 
 init();

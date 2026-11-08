@@ -10,6 +10,12 @@ export default {
   // when the site is hosted somewhere else. Leave empty for rules only.
   aiEndpoint: '/api/check',
 
+  // Live count of checks from the Worker (GET /api/stats). The card stays
+  // hidden until at least usageMinToShow checks have been made, so a brand
+  // new site doesn't advertise "3 messages checked". Empty to turn it off.
+  usageEndpoint: '/api/stats',
+  usageMinToShow: 1,
+
   // A partnering sheriff's office or police department. When both are set,
   // the "Where to report it" section shows a button to call them.
   localAgency: {

@@ -310,6 +310,11 @@
         </header>
 
         <div class="stats" data-reveal>
+          <article class="card stat stat-usage" id="stat-usage" hidden>
+            <h3 class="stat-label" data-i18n="stats.usage.label">Messages checked on RedFlag</h3>
+            <p data-i18n="stats.usage.text">A live count. We count the checks, never what the messages said.</p>
+            <div class="stat-panel"><span class="stat-value" id="stat-usage-checked"></span><span class="stat-usage-warned" id="stat-usage-warned"></span></div>
+          </article>
           <article class="card stat stat-featured" data-reveal-item>
             <h3 class="stat-label" data-i18n="stats.tested.label">Messages tested</h3>
             <p data-i18n="stats.tested.text">35 texts in our saved test set (25 scams, 10 everyday) plus 124 scam texts checked by hand. None of the 10 everyday texts was flagged.</p>

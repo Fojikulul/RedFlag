@@ -132,6 +132,9 @@ export default {
   'stats.private.label': 'Nunca se guarda',
   'stats.private.text': 'Su mensaje se revisa y se olvida. No lo guardamos ni lo vendemos.',
   'stats.pending': 'Pruebas en curso',
+  'stats.usage.label': 'Mensajes revisados en RedFlag',
+  'stats.usage.text': 'Un conteo en vivo. Contamos las revisiones, nunca lo que decían los mensajes.',
+  'stats.usage.warned': '{count} marcados como riesgosos',
 
   'catches.irs': 'Falso aviso del IRS',
   'catches.gift': 'Pedido de tarjetas de regalo',

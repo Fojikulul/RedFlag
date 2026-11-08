@@ -1602,6 +1602,22 @@ mark {
   background: var(--accent);
 }
 
+/* The live usage count spans the whole row. */
+.stat-usage {
+  grid-column: 1 / -1;
+  min-height: 0;
+}
+
+.stat-usage .stat-panel {
+  flex-wrap: wrap;
+  column-gap: 18px;
+}
+
+.stat-usage-warned {
+  color: var(--muted);
+  font-weight: 700;
+}
+
 @media (min-width: 760px) {
   .stats {
     grid-template-columns: 1fr 1fr;

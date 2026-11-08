@@ -132,6 +132,9 @@ export default {
   'stats.private.label': 'Never saved',
   'stats.private.text': 'Your message is checked and then forgotten. We don’t keep it or sell it.',
   'stats.pending': 'Testing in progress',
+  'stats.usage.label': 'Messages checked on RedFlag',
+  'stats.usage.text': 'A live count. We count the checks, never what the messages said.',
+  'stats.usage.warned': '{count} flagged as risky',
 
   'catches.irs': 'IRS impersonation',
   'catches.gift': 'Gift card request',
