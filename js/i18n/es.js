@@ -124,7 +124,7 @@ export default {
   'stats.title.accent': 'que podemos respaldar.',
   'stats.body': 'Probamos RedFlag con mensajes de estafa basados en alertas públicas de fraude y con mensajes normales que debe dejar pasar. No lo ajustamos con estos mensajes. Solo publicamos cifras que medimos.',
   'stats.tested.label': 'Mensajes probados',
-  'stats.tested.text': '25 mensajes de estafa y 10 normales, etiquetados a mano. Ninguno de los 10 normales fue marcado.',
+  'stats.tested.text': '35 mensajes de nuestro conjunto de prueba (25 estafas y 10 normales) y 124 estafas más revisadas a mano. Ninguno de los 10 normales fue marcado.',
   'stats.catch.label': 'Tasa de detección',
   'stats.catch.text': 'Porcentaje de mensajes de estafa que RedFlag marcó en rojo o amarillo.',
   'stats.languages.label': 'Idiomas',

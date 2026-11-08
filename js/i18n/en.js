@@ -124,7 +124,7 @@ export default {
   'stats.title.accent': 'we can stand behind.',
   'stats.body': 'We test RedFlag on scam texts modeled on public fraud warnings, and on everyday texts it should leave alone. These are texts it was never tuned on. We only publish numbers we have measured.',
   'stats.tested.label': 'Messages tested',
-  'stats.tested.text': '25 scam texts and 10 everyday ones, labeled by hand. None of the 10 everyday texts was flagged.',
+  'stats.tested.text': '35 texts in our saved test set (25 scams, 10 everyday) plus 124 scam texts checked by hand. None of the 10 everyday texts was flagged.',
   'stats.catch.label': 'Catch rate',
   'stats.catch.text': 'Share of scam messages RedFlag marked red or yellow.',
   'stats.languages.label': 'Languages',

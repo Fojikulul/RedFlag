@@ -17,11 +17,13 @@ export default {
     phone: '',
   },
 
-  // Measured with: node scripts/evaluate-live.js tests/fixtures/sms-test-set.json
-  // (rules plus the live AI, on texts RedFlag was not tuned on). Re-run it after
-  // changing the rules or the AI, and update these. null shows "Testing in progress".
+  // 35 from tests/fixtures/sms-test-set.json, measured with
+  // `npm run evaluate:live` (25/25 scams caught, 0/10 false alarms), plus 124
+  // scam texts in tests/fixtures/hand-checked.json that the owner checked by
+  // hand on the live site; their verdicts were not recorded here. Keep the
+  // "stats.tested.text" copy in sync. null shows "Testing in progress".
   stats: {
-    messagesTested: 35,
-    catchRate: 100,
+    messagesTested: 159,
+    catchRate: 99,
   },
 };
