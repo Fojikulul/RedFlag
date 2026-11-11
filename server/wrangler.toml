@@ -4,7 +4,7 @@ compatibility_date = "2026-10-01"
 
 [vars]
 # Pages allowed to call this Worker, comma separated.
-ALLOWED_ORIGINS = "https://fojikulul.github.io,http://localhost:8080,http://127.0.0.1:8080"
+ALLOWED_ORIGINS = "https://red-flag-vasyl3.vercel.app,https://fojikulul.github.io,http://localhost:8080,http://127.0.0.1:8080"
 # "gemini" (default) or "claude" for the message double-check. Phone
 # lookups always use Gemini, because it can search the web.
 AI_PROVIDER = "gemini"
