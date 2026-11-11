@@ -1,10 +1,12 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
 
 import { analyze } from '../js/engine/index.js';
 import { LINK_RULES } from '../js/engine/links.js';
 import { CATEGORIES, HOMOGLYPH_RULE, RULE_DEFINITIONS } from '../js/engine/rules/index.js';
 import { LANGUAGES, pickLanguage, STRINGS, t } from '../js/i18n/index.js';
+import { SUBJECT_SLUGS } from '../server/src/phone.js';
 
 const ENGINE_KEYS = [
   ...RULE_DEFINITIONS.map((rule) => `explain.${rule.id}`),
@@ -72,4 +74,30 @@ test('pickLanguage uses the first supported browser language', () => {
   assert.equal(pickLanguage(['es-MX']), 'es');
   assert.equal(pickLanguage(['fr']), 'en');
   assert.equal(pickLanguage([]), 'en');
+});
+
+test('everything the phone lookup can show is translated', () => {
+  const keys = [
+    ...SUBJECT_SLUGS.map((slug) => `phone.subject.${slug}`),
+    ...['red', 'yellow', 'unknown'].flatMap((verdict) => [`phone.verdict.${verdict}`, `phone.summary.${verdict}`]),
+    ...['agree', 'raised', 'lowered', 'failed'].map((change) => `ai.note.${change}`),
+  ];
+  for (const { code } of LANGUAGES) {
+    for (const key of keys) assert.ok(key in STRINGS[code], `${code} is missing ${key}`);
+  }
+});
+
+test('no phone result is worded as safe', () => {
+  assert.ok(!('phone.verdict.green' in STRINGS.en));
+  assert.match(STRINGS.en['phone.summary.unknown'], /does not mean it is safe/);
+});
+
+test('every string key used in the page exists', () => {
+  const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
+  const keys = [
+    ...[...html.matchAll(/data-i18n(?:-ai|-list)?="([^"]+)"/g)].map((match) => match[1]),
+    ...[...html.matchAll(/data-i18n-attr="[^":]+:([^"]+)"/g)].map((match) => match[1]),
+  ];
+  assert.ok(keys.length > 50);
+  for (const key of keys) assert.ok(key in STRINGS.en, key);
 });

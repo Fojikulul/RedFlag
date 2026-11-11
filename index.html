@@ -84,8 +84,9 @@
             </div>
 
             <p class="tool-privacy">
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10V8a5 5 0 0 1 10 0v2h1a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1v-9a1 1 0 0 1 1-1h1Zm2 0h6V8a3 3 0 0 0-6 0v2Z"/></svg>
-              <span data-i18n="tool.privacy">Your message is checked right here, on your device.</span>
+              <svg class="privacy-lock" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10V8a5 5 0 0 1 10 0v2h1a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1v-9a1 1 0 0 1 1-1h1Zm2 0h6V8a3 3 0 0 0-6 0v2Z"/></svg>
+              <svg class="privacy-info" viewBox="0 0 24 24" aria-hidden="true" hidden><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm0 2a8 8 0 1 1 0 16 8 8 0 0 1 0-16Zm-1 6h2v7h-2v-7Zm0-3h2v2h-2V7Z"/></svg>
+              <span data-i18n="tool.privacy" data-i18n-ai="tool.privacyAi">Your message is checked right here, on your device.</span>
             </p>
             <p class="tool-hint">
               <span data-i18n="tool.hint">Tip: to copy a text message, press and hold it, then choose Copy.</span>
@@ -102,6 +103,7 @@
           <div class="btn-row">
             <a class="btn btn-ghost" href="#examples" data-i18n="hero.examples">See examples</a>
             <a class="btn btn-ghost" href="#how" data-i18n="hero.howItWorks">How it works</a>
+            <a class="btn btn-ghost" href="#phone" id="phone-link" data-i18n="phone.nav" hidden>Check a phone number</a>
           </div>
         </div>
       </div>
@@ -120,6 +122,40 @@
           <li data-i18n="catches.prize">Prize you never entered</li>
           <li data-i18n="catches.job">Too-good-to-be-true job</li>
         </ul>
+      </div>
+    </section>
+
+    <section class="section" id="phone" aria-labelledby="phone-title" hidden>
+      <div class="container">
+        <header class="section-head">
+          <p class="eyebrow" data-i18n="phone.label">Phone numbers</p>
+          <h2 class="section-title" id="phone-title">
+            <span data-i18n="phone.title.lead">Who just called?</span>
+            <span class="accent" data-i18n="phone.title.accent">Look up the number.</span>
+          </h2>
+          <p class="section-lede" data-i18n="phone.body">Type in a number that called or texted you. We check reports people made to the FTC (the U.S. Federal Trade Commission) and search the web for scam warnings about it.</p>
+        </header>
+
+        <div class="phone-tool">
+          <form class="tool" id="phone-form" novalidate>
+            <label class="tool-label" for="phone-number" data-i18n="phone.inputLabel">Phone number that called or texted you</label>
+            <input class="phone-input" id="phone-number" name="phone" type="tel" inputmode="tel" autocomplete="off" maxlength="40"
+              placeholder="(555) 123-4567" data-i18n-attr="placeholder:phone.placeholder">
+            <p class="tool-error" id="phone-error" role="alert" hidden></p>
+
+            <div class="tool-actions">
+              <button class="btn btn-primary btn-large" type="submit" id="phone-button" data-i18n="phone.button">Look it up</button>
+            </div>
+
+            <p class="tool-privacy">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm0 2a8 8 0 1 1 0 16 8 8 0 0 1 0-16Zm-1 6h2v7h-2v-7Zm0-3h2v2h-2V7Z"/></svg>
+              <span data-i18n="phone.privacy">When you press Look it up, the number is sent to our server and to Google’s Gemini AI to search the web. We don’t save it.</span>
+            </p>
+          </form>
+
+          <div class="result" id="phone-result" tabindex="-1" hidden></div>
+          <p class="visually-hidden" id="phone-announcer" aria-live="polite"></p>
+        </div>
       </div>
     </section>
 
@@ -219,7 +255,7 @@
             <span data-i18n="how.title.lead">Four steps.</span>
             <span class="accent" data-i18n="how.title.accent">About ten seconds.</span>
           </h2>
-          <p class="section-lede" data-i18n="how.body">No account, no download, no waiting. The check happens on your own phone or computer.</p>
+          <p class="section-lede" data-i18n="how.body" data-i18n-ai="how.bodyAi">No account, no download, no waiting. The check happens on your own phone or computer.</p>
         </header>
 
         <ol class="steps" data-reveal>
@@ -327,8 +363,8 @@
           </article>
           <article class="card stat" data-reveal-item>
             <p class="stat-big" data-count="100" data-count-suffix="%">100%</p>
-            <h3 class="stat-label" data-i18n="stats.private.label">In your browser</h3>
-            <p data-i18n="stats.private.text">The check runs on your device. Nothing is sent unless you ask the AI.</p>
+            <h3 class="stat-label" data-i18n="stats.private.label" data-i18n-ai="stats.private.labelAi">In your browser</h3>
+            <p data-i18n="stats.private.text" data-i18n-ai="stats.private.textAi">The check runs on your device. Nothing is sent unless you ask the AI.</p>
           </article>
         </div>
       </div>
@@ -390,7 +426,7 @@
           <h2 class="section-title" id="faq-title" data-i18n="faq.title">Good to know</h2>
         </header>
         <div class="faq">
-          <details><summary data-i18n="faq.1.q">Does my message get sent anywhere?</summary><p data-i18n="faq.1.a">No.</p></details>
+          <details><summary data-i18n="faq.1.q">Does my message get sent anywhere?</summary><p data-i18n="faq.1.a" data-i18n-ai="faq.1.aAi">No.</p></details>
           <details><summary data-i18n="faq.2.q">Is it really free?</summary><p data-i18n="faq.2.a">Yes.</p></details>
           <details><summary data-i18n="faq.3.q">Does it work in Ukrainian?</summary><p data-i18n="faq.3.a">Yes.</p></details>
           <details><summary data-i18n="faq.4.q">What if I already paid?</summary><p data-i18n="faq.4.a">Call your bank.</p></details>
