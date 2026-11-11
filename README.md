@@ -89,7 +89,7 @@ A visitor types a number that called or texted them. The Worker answers from two
 1. **FTC reports.** The FTC publishes the Do Not Call complaints people file, but its API can't be searched by phone number. So the Worker copies the reports into a Cloudflare D1 database on a schedule, and lookups read that copy. The numbers people look up are never sent to the FTC.
 2. **A web search.** Gemini searches Google for the number and sums up what it finds, with links to the pages it read.
 
-The answer is **red** (reported as a scam), **yellow** (some reports) or **grey** (no reports found). There is no green: finding nothing doesn't make a number safe, and the page says that.
+The answer is **red**, **yellow** (some reports) or **grey** (no reports found). Red reads "Reported as a scam" only when the web search found scam reports; when it rests on FTC reports alone it reads "Reported many times", because those reports are about unwanted calls, not proven scams. There is no green: finding nothing doesn't make a number safe, and the page says that.
 
 ### Counting use
 

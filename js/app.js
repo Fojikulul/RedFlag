@@ -605,8 +605,12 @@ function renderPhone() {
   }
 
   const { result } = lookup;
-  const verdictText = t(`phone.verdict.${result.verdict}`, lang);
-  const summaryText = t(`phone.summary.${result.verdict}`, lang);
+  // FTC reports are about unwanted calls, which is not the same as a scam.
+  // The page only says "scam" when the web search found scam reports too.
+  const webSaysScam = result.web.status === 'done' && result.web.verdict === 'red';
+  const wording = result.verdict === 'red' && !webSaysScam ? 'reported' : result.verdict;
+  const verdictText = t(`phone.verdict.${wording}`, lang);
+  const summaryText = t(`phone.summary.${wording}`, lang);
   const adviceText = t('phone.advice', lang);
 
   const verdict = el('div', `verdict verdict-${result.verdict}`);

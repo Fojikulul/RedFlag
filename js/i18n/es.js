@@ -254,6 +254,8 @@ export default {
   'phone.verdict.yellow': 'Algunas denuncias. Tenga cuidado',
   'phone.verdict.unknown': 'No encontramos denuncias',
   'phone.summary.red': 'La gente ha denunciado este número por estafas o llamadas no deseadas. No devuelva la llamada, no pague y no comparta nada.',
+  'phone.verdict.reported': 'Denunciado muchas veces',
+  'phone.summary.reported': 'Muchas personas han denunciado llamadas no deseadas de este número. Eso no prueba que sea una estafa, pero no devuelva la llamada, no pague y no comparta nada.',
   'phone.summary.yellow': 'Algunas personas han denunciado este número. Tenga cuidado con todo lo que le pida quien llama.',
   'phone.summary.unknown': 'No encontramos denuncias de este número. Eso no significa que sea seguro. Los estafadores cambian de número a menudo y pueden falsificar el número que usted ve.',
   'phone.advice': 'No devuelva la llamada a un número que no conoce. Si dijeron ser su banco o una oficina del gobierno, cuelgue y llame al número de su tarjeta o de su sitio web oficial.',

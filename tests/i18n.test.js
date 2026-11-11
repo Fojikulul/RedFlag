@@ -79,7 +79,7 @@ test('pickLanguage uses the first supported browser language', () => {
 test('everything the phone lookup can show is translated', () => {
   const keys = [
     ...SUBJECT_SLUGS.map((slug) => `phone.subject.${slug}`),
-    ...['red', 'yellow', 'unknown'].flatMap((verdict) => [`phone.verdict.${verdict}`, `phone.summary.${verdict}`]),
+    ...['red', 'reported', 'yellow', 'unknown'].flatMap((verdict) => [`phone.verdict.${verdict}`, `phone.summary.${verdict}`]),
     ...['agree', 'raised', 'lowered', 'failed'].map((change) => `ai.note.${change}`),
   ];
   for (const { code } of LANGUAGES) {

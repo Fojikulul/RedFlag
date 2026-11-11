@@ -254,6 +254,8 @@ export default {
   'phone.verdict.yellow': 'Some reports. Be careful',
   'phone.verdict.unknown': 'No reports found',
   'phone.summary.red': 'People have reported this number for scams or unwanted calls. Do not call back, pay or share anything.',
+  'phone.verdict.reported': 'Reported many times',
+  'phone.summary.reported': 'Many people have reported unwanted calls from this number. That does not prove it is a scam, but do not call back, pay or share anything.',
   'phone.summary.yellow': 'A few people have reported this number. Be careful with anything this caller asks for.',
   'phone.summary.unknown': 'We found no reports for this number. That does not mean it is safe. Scammers change numbers often and can fake the number you see.',
   'phone.advice': 'Do not call back a number you don’t know. If the caller said they were your bank or a government office, hang up and call the number on your card or their official website.',
