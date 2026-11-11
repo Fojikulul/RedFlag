@@ -19,7 +19,7 @@ export default {
   // Fill these in from the testing spreadsheet once real samples are measured.
   // Anything left null shows "Testing in progress" instead of a number.
   stats: {
-    messagesTested: null,
-    catchRate: null,
+    messagesTested: 372,
+    catchRate: 99,
   },
 };
