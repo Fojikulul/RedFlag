@@ -8,6 +8,7 @@ export default {
   'nav.localTime': 'Su hora',
 
   'hero.label': 'Gratis · Privado · Sin registro',
+  'hero.labelAi': 'Gratis · Sin registro · 4 idiomas',
   'hero.title.lead': '¿Le llegó un mensaje raro?',
   'hero.title.accent': 'Péguelo aquí primero.',
   'hero.body': 'RedFlag lee el mensaje como lo haría un amigo cuidadoso. Le señala los trucos que usan los estafadores y le dice qué hacer después, en palabras sencillas.',
@@ -134,6 +135,8 @@ export default {
   'stats.private.text': 'La revisión se hace en su dispositivo. No se envía nada a menos que le pregunte a la IA.',
   'stats.private.labelAi': 'No guardamos nada',
   'stats.private.textAi': 'Nuestras reglas funcionan en su dispositivo. La revisión de la IA pasa por nuestro servidor, que no guarda nada.',
+  'stats.checked.label': 'Mensajes revisados',
+  'stats.checked.text': 'Contamos cada vez que alguien revisa un mensaje aquí. Guardamos el número, nunca el mensaje.',
   'stats.pending': 'Pruebas en curso',
 
   'catches.irs': 'Falso aviso del IRS',
@@ -181,6 +184,7 @@ export default {
   'source.body': 'RedFlag es gratis y de código abierto. Cualquiera puede ver exactamente cómo decide, sugerir reglas nuevas o agregar ejemplos en su idioma.',
   'source.button': 'Ver el código',
   'source.window.description': 'Verificador de estafas gratis y privado para mensajes, correos y enlaces.',
+  'source.window.descriptionAi': 'Verificador de estafas gratis para mensajes, correos, enlaces y números de teléfono.',
 
   'workshops.label': 'Para talleres',
   'workshops.title.lead': 'Lleve RedFlag',
@@ -208,6 +212,7 @@ export default {
   'faq.5.a': 'Sí. Busca trucos de estafa comunes y puede pasar por alto algunos nuevos o advertir sobre un mensaje real. Un resultado verde no garantiza que sea seguro. Si tiene dudas, pregunte a alguien de confianza.',
 
   'footer.tagline': 'Revisiones de estafas gratis y privadas en cuatro idiomas.',
+  'footer.taglineAi': 'Revisiones de estafas gratis en cuatro idiomas.',
   'footer.github': 'Código en GitHub',
   'footer.notAdvice': 'RedFlag da orientación general, no asesoría legal ni financiera.',
 

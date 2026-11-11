@@ -38,6 +38,9 @@ const lookup = {
   openRows: new Set(['ftc', 'web']),
 };
 
+// How many messages have been checked, from the Worker's daily count.
+let checkedCount = null;
+
 const elements = {
   form: document.getElementById('check-form'),
   message: document.getElementById('message'),
@@ -437,7 +440,7 @@ function aiPanel() {
     panel.append(el('p', 'tool-error', t(state.ai.messageKey, lang)));
     const button = el('button', 'btn btn-primary', t('ai.retry', lang));
     button.type = 'button';
-    button.addEventListener('click', () => askAi());
+    button.addEventListener('click', () => askAi({ retry: true }));
     panel.append(button);
   }
 
@@ -445,7 +448,7 @@ function aiPanel() {
   return panel;
 }
 
-async function askAi({ render = true } = {}) {
+async function askAi({ render = true, retry = false } = {}) {
   const text = state.checkedText;
   if (text === null) return;
 
@@ -459,7 +462,8 @@ async function askAi({ render = true } = {}) {
     const response = await fetch(config.aiEndpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text: text.trim().slice(0, AI_MAX_CHARS), lang: state.lang }),
+      // A second try at the same message must not be counted as a new check.
+      body: JSON.stringify({ text: text.trim().slice(0, AI_MAX_CHARS), lang: state.lang, retry }),
       signal: controller.signal,
     });
     if (state.checkedText !== text) return;
@@ -721,7 +725,14 @@ function check() {
 
   effects.scan(elements.field);
   renderResult(text);
-  if (config.aiEndpoint) askAi({ render: false });
+  if (config.aiEndpoint) {
+    askAi({ render: false });
+    // This check is being counted by the Worker right now.
+    if (checkedCount !== null) {
+      checkedCount++;
+      renderCheckedCount();
+    }
+  }
 
   elements.result.tabIndex = -1;
   elements.result.focus({ preventScroll: true });
@@ -801,6 +812,28 @@ function renderStats() {
   const { messagesTested, catchRate } = config.stats;
   setStat('stat-tested', messagesTested === null ? null : String(messagesTested));
   setStat('stat-catch', catchRate === null ? null : `${Math.round(catchRate)}%`);
+  renderCheckedCount();
+}
+
+// The live count takes the place of the "100%" card once there is something
+// to show. Until then, and whenever the Worker can't be reached, that card stays.
+function renderCheckedCount() {
+  const show = checkedCount !== null && checkedCount > 0;
+  document.getElementById('stat-checked-card').hidden = !show;
+  document.getElementById('stat-private-card').hidden = show;
+  if (show) document.getElementById('stat-checked').textContent = new Intl.NumberFormat(state.lang).format(checkedCount);
+}
+
+async function loadCheckedCount() {
+  try {
+    const response = await fetch(`${config.aiEndpoint.replace(/\/+$/, '')}/stats`);
+    if (!response.ok) return;
+    const { checks } = await response.json();
+    if (Number.isInteger(checks)) checkedCount = checks;
+    renderCheckedCount();
+  } catch {
+    // The page works the same without the number.
+  }
 }
 
 function setStat(id, value) {
@@ -951,6 +984,7 @@ function init() {
   // The lookup needs the Worker, and with the AI on, the lock icon by the
   // message box would promise more privacy than the page gives.
   const online = Boolean(config.aiEndpoint);
+  if (online) loadCheckedCount();
   elements.phoneSection.hidden = !online;
   elements.phoneLink.hidden = !online;
   document.querySelector('.privacy-lock').toggleAttribute('hidden', online);

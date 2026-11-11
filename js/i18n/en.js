@@ -8,6 +8,7 @@ export default {
   'nav.localTime': 'Your time',
 
   'hero.label': 'Free · Private · No sign-up',
+  'hero.labelAi': 'Free · No sign-up · 4 languages',
   'hero.title.lead': 'Got a weird text?',
   'hero.title.accent': 'Paste it here first.',
   'hero.body': 'RedFlag reads the message the way a careful friend would. It points out the tricks scammers use and tells you what to do next, in plain words.',
@@ -134,6 +135,8 @@ export default {
   'stats.private.text': 'The check runs on your device. Nothing is sent unless you ask the AI.',
   'stats.private.labelAi': 'Never stored by us',
   'stats.private.textAi': 'Our rules run on your device. The AI double-check goes through our server, which saves nothing.',
+  'stats.checked.label': 'Messages checked',
+  'stats.checked.text': 'Counted each time someone checks a message here. We keep the count, never the message.',
   'stats.pending': 'Testing in progress',
 
   'catches.irs': 'IRS impersonation',
@@ -181,6 +184,7 @@ export default {
   'source.body': 'RedFlag is free and open source. Anyone can read exactly how it decides, suggest new rules or add samples in their language.',
   'source.button': 'View the code',
   'source.window.description': 'Free, private scam checker for texts, emails and links.',
+  'source.window.descriptionAi': 'Free scam checker for texts, emails, links and phone numbers.',
 
   'workshops.label': 'For workshops',
   'workshops.title.lead': 'Bring RedFlag',
@@ -208,6 +212,7 @@ export default {
   'faq.5.a': 'Yes. It looks for common scam tricks and can miss new ones or warn about a real message. A green result does not prove a message is safe. When in doubt, ask someone you trust.',
 
   'footer.tagline': 'Free, private scam checks in four languages.',
+  'footer.taglineAi': 'Free scam checks in four languages.',
   'footer.github': 'Source code on GitHub',
   'footer.notAdvice': 'RedFlag gives general guidance, not legal or financial advice.',
 

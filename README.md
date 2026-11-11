@@ -91,6 +91,19 @@ A visitor types a number that called or texted them. The Worker answers from two
 
 The answer is **red** (reported as a scam), **yellow** (some reports) or **grey** (no reports found). There is no green: finding nothing doesn't make a number safe, and the page says that.
 
+### Counting use
+
+The Worker keeps one number per day for message checks and one for phone lookups, in the `daily_counts` table. Nothing else about a check is stored: no text, no phone number, no result, no address. A second try at the same message isn't counted twice. Days are in UTC.
+
+The total appears on the site as **Messages checked**. For the day-by-day numbers:
+
+```bash
+cd server
+npm run counts
+```
+
+`GET /stats` on the Worker returns the totals and the last 30 days as JSON. Checks are only counted while `aiEndpoint` is set, because without the Worker a check never leaves the device and there is nothing to count it.
+
 ### Keys
 
 All keys live on the Worker as secrets. None is in the page, the repo or the browser.
@@ -133,7 +146,7 @@ npm run deploy
 
 Then set `aiEndpoint` to the deployed URL and add your site to `ALLOWED_ORIGINS` in `server/wrangler.toml`. The import runs every 20 minutes and fills in the last two weeks first, so the database takes a few days to catch up; reports older than a year are dropped.
 
-The Worker only answers requests from the allowed origins, allows 10 message checks and 3 phone lookups a minute per visitor, and never logs or stores message text or phone numbers. Set a spending limit in Google AI Studio as well.
+The Worker only answers requests from the allowed origins, allows 10 message checks and 3 phone lookups a minute per visitor, and never logs or stores message text or phone numbers; it keeps only a daily count. Set a spending limit in Google AI Studio as well.
 
 To use the Claude API for the message double-check instead, set `AI_PROVIDER = "claude"` in `wrangler.toml` and add an `ANTHROPIC_API_KEY` secret. Phone lookups always use Gemini, because it can search the web. The wording on the page names Google, so change the `ai.text`, `tool.privacyAi` and `faq.1.aAi` strings and `privacy.html` if you switch.
 
@@ -149,7 +162,7 @@ Set `localAgency` in `js/config.js` to a name and non-emergency phone number, an
 
 - With `aiEndpoint` empty, messages are checked in the browser and nothing is sent anywhere.
 - With the Worker on, each checked message also goes through the Worker to Google's Gemini API, and the line under the Check button says so. A phone number is sent only when the visitor presses **Look it up**.
-- The Worker never logs or stores messages or phone numbers. The only database it keeps is a copy of public FTC reports.
+- The Worker never logs or stores messages or phone numbers. Its database holds a copy of public FTC reports and a daily count of checks and lookups, nothing else.
 - The only things stored are the language and text-size settings, in `localStorage`.
 - Fonts and the animation library are served from this site, not from third parties.
 - There is a spot in `index.html` for one privacy-friendly page-view counter. Nothing else is tracked.
