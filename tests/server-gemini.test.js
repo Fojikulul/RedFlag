@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
 import {
-  answerText, buildCheckRequest, buildPhoneRequest, callGemini, GeminiError, parseJson, readCheckResponse, readPhoneResponse,
+  answerText, buildPhoneRequest, callGemini, GeminiError, parseJson, readPhoneResponse,
 } from '../server/src/gemini.js';
 
 const reply = (text, extra = {}) => ({
@@ -25,24 +25,6 @@ test('sends the key in a header, never in the address', async () => {
 test('turns a failed call into an error that carries the status', async () => {
   const fetchImpl = async () => ({ ok: false, status: 429 });
   await assert.rejects(callGemini({ apiKey: 'k', body: {}, fetchImpl }), (error) => error instanceof GeminiError && error.status === 429);
-});
-
-test('wraps the message as data and asks for JSON', () => {
-  const request = buildCheckRequest({ text: 'Pay now', lang: 'uk' });
-  const content = request.contents[0].parts[0].text;
-  assert.match(content, /Answer in Ukrainian/);
-  assert.match(content, /<message>\nPay now\n<\/message>/);
-  assert.equal(request.generationConfig.responseMimeType, 'application/json');
-  assert.deepEqual(request.generationConfig.responseJsonSchema.properties.verdict.enum, ['red', 'yellow', 'green']);
-  assert.equal(request.tools, undefined);
-});
-
-test('reads a message opinion and rejects broken ones', () => {
-  const good = { verdict: 'yellow', tactics: ['urgency', 'made-up'], explanation: 'It rushes you.', advice: 'Wait.' };
-  assert.deepEqual(readCheckResponse(reply(JSON.stringify(good))), { ...good, tactics: ['urgency'] });
-  assert.equal(readCheckResponse(reply('{"verdict":"purple"}')), null);
-  assert.equal(readCheckResponse(reply('not json')), null);
-  assert.equal(readCheckResponse({ candidates: [] }), null);
 });
 
 test('ignores answers that were cut off or blocked, and thinking text', () => {

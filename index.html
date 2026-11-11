@@ -57,7 +57,7 @@
       <div class="hero-radar" data-art="radar" aria-hidden="true"></div>
       <div class="container hero-grid">
         <div class="hero-intro">
-          <p class="eyebrow-pill" data-i18n="hero.label" data-i18n-ai="hero.labelAi">Free · Private · No sign-up</p>
+          <p class="eyebrow-pill" data-i18n="hero.label">Free · Private · No sign-up</p>
           <h1 class="display">
             <span data-i18n="hero.title.lead">Got a weird text?</span>
             <span class="accent" data-i18n="hero.title.accent">Paste it here first.</span>
@@ -84,9 +84,8 @@
             </div>
 
             <p class="tool-privacy">
-              <svg class="privacy-lock" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10V8a5 5 0 0 1 10 0v2h1a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1v-9a1 1 0 0 1 1-1h1Zm2 0h6V8a3 3 0 0 0-6 0v2Z"/></svg>
-              <svg class="privacy-info" viewBox="0 0 24 24" aria-hidden="true" hidden><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm0 2a8 8 0 1 1 0 16 8 8 0 0 1 0-16Zm-1 6h2v7h-2v-7Zm0-3h2v2h-2V7Z"/></svg>
-              <span data-i18n="tool.privacy" data-i18n-ai="tool.privacyAi">Your message is checked right here, on your device.</span>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10V8a5 5 0 0 1 10 0v2h1a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1v-9a1 1 0 0 1 1-1h1Zm2 0h6V8a3 3 0 0 0-6 0v2Z"/></svg>
+              <span data-i18n="tool.privacy">Checked by our rules and a private AI. Your message is never saved.</span>
             </p>
             <p class="tool-hint">
               <span data-i18n="tool.hint">Tip: to copy a text message, press and hold it, then choose Copy.</span>
@@ -255,7 +254,7 @@
             <span data-i18n="how.title.lead">Four steps.</span>
             <span class="accent" data-i18n="how.title.accent">About ten seconds.</span>
           </h2>
-          <p class="section-lede" data-i18n="how.body" data-i18n-ai="how.bodyAi">No account, no download, no waiting. The check happens on your own phone or computer.</p>
+          <p class="section-lede" data-i18n="how.body">No account, no download, no waiting. Our rules and an AI both read the message, and nothing is saved.</p>
         </header>
 
         <ol class="steps" data-reveal>
@@ -342,13 +341,18 @@
             <span data-i18n="stats.title.lead">Numbers</span>
             <span class="accent" data-i18n="stats.title.accent">we can stand behind.</span>
           </h2>
-          <p class="section-lede" data-i18n="stats.body">We test RedFlag against real scam messages people in our community received. We only publish numbers we have measured.</p>
+          <p class="section-lede" data-i18n="stats.body">We test RedFlag on scam texts modeled on public fraud warnings, and on everyday texts it should leave alone. These are texts it was never tuned on. We only publish numbers we have measured.</p>
         </header>
 
         <div class="stats" data-reveal>
+          <article class="card stat stat-usage" id="stat-usage" hidden>
+            <h3 class="stat-label" data-i18n="stats.usage.label">Messages checked on RedFlag</h3>
+            <p data-i18n="stats.usage.text">A live count. We count the checks, never what the messages said.</p>
+            <div class="stat-panel"><span class="stat-value" id="stat-usage-checked"></span><span class="stat-usage-warned" id="stat-usage-warned"></span></div>
+          </article>
           <article class="card stat stat-featured" data-reveal-item>
             <h3 class="stat-label" data-i18n="stats.tested.label">Messages tested</h3>
-            <p data-i18n="stats.tested.text">Real scam and everyday messages, collected and labeled by hand.</p>
+            <p data-i18n="stats.tested.text">35 texts in our saved test set (25 scams, 10 everyday) plus 124 scam texts checked by hand. None of the 10 everyday texts was flagged.</p>
             <div class="stat-panel"><span class="stat-value" id="stat-tested"></span></div>
           </article>
           <article class="card stat" data-reveal-item>
@@ -361,15 +365,10 @@
             <h3 class="stat-label" data-i18n="stats.languages.label">Languages</h3>
             <p data-i18n="stats.languages.text">English, Ukrainian, Russian and Spanish.</p>
           </article>
-          <article class="card stat" id="stat-checked-card" data-reveal-item hidden>
-            <p class="stat-big" id="stat-checked"></p>
-            <h3 class="stat-label" data-i18n="stats.checked.label">Messages checked</h3>
-            <p data-i18n="stats.checked.text">Counted each time someone checks a message here. We keep the count, never the message.</p>
-          </article>
-          <article class="card stat" id="stat-private-card" data-reveal-item>
+          <article class="card stat" data-reveal-item>
             <p class="stat-big" data-count="100" data-count-suffix="%">100%</p>
-            <h3 class="stat-label" data-i18n="stats.private.label" data-i18n-ai="stats.private.labelAi">In your browser</h3>
-            <p data-i18n="stats.private.text" data-i18n-ai="stats.private.textAi">The check runs on your device. Nothing is sent unless you ask the AI.</p>
+            <h3 class="stat-label" data-i18n="stats.private.label">Never saved</h3>
+            <p data-i18n="stats.private.text">Your message is checked and then forgotten. We don’t keep it or sell it.</p>
           </article>
         </div>
       </div>
@@ -394,7 +393,7 @@
           </div>
           <div class="browser-page">
             <p class="repo-name">Fojikulul / <strong>RedFlag</strong> <span class="repo-badge">Public</span></p>
-            <p class="repo-description" data-i18n="source.window.description" data-i18n-ai="source.window.descriptionAi">Free, private scam checker for texts, emails and links.</p>
+            <p class="repo-description" data-i18n="source.window.description">Free, private scam checker for texts, emails and links.</p>
             <ul class="repo-files">
               <li><span class="folder"></span>js/engine</li>
               <li><span class="folder"></span>js/i18n</li>
@@ -431,7 +430,7 @@
           <h2 class="section-title" id="faq-title" data-i18n="faq.title">Good to know</h2>
         </header>
         <div class="faq">
-          <details><summary data-i18n="faq.1.q">Does my message get sent anywhere?</summary><p data-i18n="faq.1.a" data-i18n-ai="faq.1.aAi">No.</p></details>
+          <details><summary data-i18n="faq.1.q">Does my message get sent anywhere?</summary><p data-i18n="faq.1.a">No.</p></details>
           <details><summary data-i18n="faq.2.q">Is it really free?</summary><p data-i18n="faq.2.a">Yes.</p></details>
           <details><summary data-i18n="faq.3.q">Does it work in Ukrainian?</summary><p data-i18n="faq.3.a">Yes.</p></details>
           <details><summary data-i18n="faq.4.q">What if I already paid?</summary><p data-i18n="faq.4.a">Call your bank.</p></details>
@@ -459,7 +458,7 @@
           <a class="brand" href="#top" aria-label="RedFlag">
             <span class="wordmark" aria-hidden="true">redf<span class="wordmark-l">l<svg class="wordmark-flag" viewBox="0 0 60 30"><path d="M1 3 C17 -3 33 11 59 3 L59 27 C33 35 17 21 1 27 Z"/></svg></span>ag<span class="wordmark-dot">.</span></span>
           </a>
-          <p class="footer-tagline" data-i18n="footer.tagline" data-i18n-ai="footer.taglineAi">Free, private scam checks in four languages.</p>
+          <p class="footer-tagline" data-i18n="footer.tagline">Free, private scam checks in four languages.</p>
           <a class="btn btn-primary focus-message" href="#checker" data-i18n="nav.check">Check a message</a>
         </div>
 

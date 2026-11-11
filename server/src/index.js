@@ -1,26 +1,33 @@
-// Cloudflare Worker behind the site's AI double-check and phone lookup.
+// Cloudflare Worker that serves the site, runs the AI check and looks up
+// phone numbers.
 //
-// API keys live here as Worker secrets and never reach the browser.
-// Messages and phone numbers are used for the one request and are never
-// logged or stored. The only thing kept is a daily count of how many checks
-// and lookups happened.
+// Files in the site (index.html, css, js, assets) are served by Cloudflare
+// directly. Only /api/check, /api/lookup and /api/stats reach this code. API
+// keys live here as Worker secrets and never reach the browser. Message text
+// and phone numbers are used for the one request and are not logged or
+// stored. GET /api/stats returns usage counts (how many checks, by day),
+// which hold nothing about the messages.
 
 import Anthropic from '@anthropic-ai/sdk';
 
-import { InputError, parseInput, secondOpinion } from './check.js';
-import { countUse, readCounts } from './counts.js';
+import { InputError, secondOpinion } from './check.js';
 import { importReports } from './ftc-import.js';
-import {
-  buildCheckRequest, buildPhoneRequest, callGemini, GeminiError, readCheckResponse, readPhoneResponse,
-} from './gemini.js';
+import { buildPhoneRequest, callGemini, readPhoneResponse } from './gemini.js';
 import { lookupPhone } from './phone.js';
+import { recordCheck, recordLookup, usageSummary } from './usage.js';
 
-function corsHeaders(origin, env) {
+const API_PATH = '/api/check';
+const LOOKUP_PATH = '/api/lookup';
+const STATS_PATH = '/api/stats';
+
+function corsHeaders(request, env) {
+  const origin = request.headers.get('Origin') ?? '';
   const allowed = (env.ALLOWED_ORIGINS ?? '').split(',').map((o) => o.trim()).filter(Boolean);
-  if (!allowed.includes(origin)) return null;
+  // The site's own pages may always call it; other sites only if listed.
+  if (origin !== new URL(request.url).origin && !allowed.includes(origin)) return null;
   return {
     'Access-Control-Allow-Origin': origin,
-    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type',
     'Access-Control-Max-Age': '86400',
     Vary: 'Origin',
@@ -34,106 +41,116 @@ function json(status, body, headers) {
   });
 }
 
-async function withinLimit(limiter, request) {
-  if (!limiter) return true;
-  const ip = request.headers.get('CF-Connecting-IP') ?? 'unknown';
-  const { success } = await limiter.limit({ key: ip });
-  return success;
-}
-
-const isBusy = (error) => error instanceof Anthropic.RateLimitError
-  || (error instanceof GeminiError && [429, 503].includes(error.status));
-
-async function checkMessage(body, env) {
+function providerCall(env) {
   if (env.AI_PROVIDER === 'claude') {
     const client = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY });
-    const createMessage = (params) => (params.betas ? client.beta.messages.create(params) : client.messages.create(params));
-    return secondOpinion(body, createMessage, env.MODEL || undefined);
+    return (params) => (params.betas ? client.beta.messages.create(params) : client.messages.create(params));
   }
-  const input = parseInput(body);
-  const response = await callGemini({ apiKey: env.GEMINI_API_KEY, model: env.GEMINI_MODEL || undefined, body: buildCheckRequest(input) });
-  return readCheckResponse(response);
+  return (model, params) => env.AI.run(model, params);
 }
 
-async function searchWeb(input, env) {
-  const response = await callGemini({ apiKey: env.GEMINI_API_KEY, model: env.GEMINI_MODEL || undefined, body: buildPhoneRequest(input) });
-  return readPhoneResponse(response);
+// The checks every POST goes through: allowed origin, method, per-visitor
+// limit, readable JSON. Returns either a ready response or the body.
+async function accept(request, env, limiter) {
+  const cors = corsHeaders(request, env);
+  if (!cors) return { response: json(403, { error: 'origin_not_allowed' }) };
+
+  if (request.method === 'OPTIONS') return { response: new Response(null, { status: 204, headers: cors }) };
+  if (request.method !== 'POST') return { response: json(405, { error: 'method_not_allowed' }, cors) };
+
+  if (limiter) {
+    const ip = request.headers.get('CF-Connecting-IP') ?? 'unknown';
+    const { success } = await limiter.limit({ key: ip });
+    if (!success) return { response: json(429, { error: 'too_many_requests' }, cors) };
+  }
+
+  try {
+    return { cors, body: await request.json() };
+  } catch {
+    return { response: json(400, { error: 'invalid_json' }, cors) };
+  }
+}
+
+async function check(request, env, ctx) {
+  // Ten checks a minute per visitor keeps one person from using up the
+  // daily allowance for everyone.
+  const { response, cors, body } = await accept(request, env, env.RATE_LIMITER);
+  if (response) return response;
+
+  // Counted once the message is known to be valid, whatever the AI does.
+  const count = (verdict) => {
+    if (env.DB) ctx.waitUntil(recordCheck(env.DB, verdict).catch(() => console.error('usage count failed')));
+  };
+
+  try {
+    const opinion = await secondOpinion(body, {
+      provider: env.AI_PROVIDER || 'workers-ai',
+      call: providerCall(env),
+      model: env.MODEL || undefined,
+    });
+    count(opinion?.verdict ?? null);
+    if (!opinion) return json(502, { error: 'no_opinion' }, cors);
+    return json(200, opinion, cors);
+  } catch (error) {
+    if (error instanceof InputError) return json(400, { error: 'invalid_input', message: error.message }, cors);
+    count(null);
+    if (error instanceof Anthropic.RateLimitError) return json(503, { error: 'busy' }, cors);
+    // Log the kind of failure only, never the message the person pasted.
+    // Running out of the free daily allowance also ends up here.
+    console.error('ai check failed:', error?.status ?? error?.name);
+    return json(502, { error: 'upstream_failed' }, cors);
+  }
+}
+
+// Phone number lookup: FTC reports from our own copy in D1, plus a web
+// search through Gemini when a key with search is set up.
+async function lookup(request, env, ctx) {
+  // Three lookups a minute per visitor; each one can be a paid web search.
+  const { response, cors, body } = await accept(request, env, env.LOOKUP_LIMITER);
+  if (response) return response;
+
+  const searchWeb = env.GEMINI_API_KEY
+    ? async (input) => readPhoneResponse(await callGemini({
+      apiKey: env.GEMINI_API_KEY, model: env.GEMINI_MODEL || undefined, body: buildPhoneRequest(input),
+    }))
+    : null;
+
+  try {
+    const result = await lookupPhone(body, { db: env.DB, searchWeb });
+    if (env.DB) ctx.waitUntil(recordLookup(env.DB).catch(() => console.error('usage count failed')));
+    return json(200, result, cors);
+  } catch (error) {
+    if (error instanceof InputError) return json(400, { error: 'invalid_input', message: error.message }, cors);
+    // Log the kind of failure only, never the number.
+    console.error('lookup failed:', error?.name);
+    return json(502, { error: 'upstream_failed' }, cors);
+  }
+}
+
+async function stats(env) {
+  if (!env.DB) return json(404, { error: 'no_stats' });
+  const response = json(200, await usageSummary(env.DB));
+  // Counts can be a few minutes old; this keeps the database reads low.
+  response.headers.set('Cache-Control', 'public, max-age=300');
+  return response;
 }
 
 export default {
   async fetch(request, env, ctx) {
-    const cors = corsHeaders(request.headers.get('Origin') ?? '', env);
-    if (!cors) return json(403, { error: 'origin_not_allowed' });
-
-    if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors });
-
     const { pathname } = new URL(request.url);
-
-    // The page shows how many messages have been checked. Counts only.
-    if (request.method === 'GET' && pathname === '/stats') {
-      if (!env.REPORTS) return json(404, { error: 'not_found' }, cors);
-      try {
-        return json(200, await readCounts(env.REPORTS), { ...cors, 'Cache-Control': 'public, max-age=60' });
-      } catch (error) {
-        console.error('stats failed:', error?.name);
-        return json(502, { error: 'upstream_failed' }, cors);
-      }
-    }
-    if (request.method !== 'POST') return json(405, { error: 'method_not_allowed' }, cors);
-
-    const lookup = pathname === '/lookup';
-    if (!lookup && pathname !== '/' && pathname !== '/check') return json(404, { error: 'not_found' }, cors);
-
-    // Per-visitor limits keep one person from running up the bill. A web
-    // search costs more than a message check, so lookups get fewer.
-    if (!(await withinLimit(lookup ? env.LOOKUP_LIMITER : env.RATE_LIMITER, request))) {
-      return json(429, { error: 'too_many_requests' }, cors);
-    }
-
-    let body;
-    try {
-      body = await request.json();
-    } catch {
-      return json(400, { error: 'invalid_json' }, cors);
-    }
-
-    // Counting must never break or slow down an answer. A second try at the
-    // same message is not a new check.
-    const counted = () => {
-      if (body?.retry === true) return;
-      ctx.waitUntil(countUse(env.REPORTS, lookup ? 'lookup' : 'check').catch(() => {}));
-    };
-
-    try {
-      if (lookup) {
-        const result = await lookupPhone(body, {
-          db: env.REPORTS,
-          searchWeb: env.GEMINI_API_KEY ? (input) => searchWeb(input, env) : null,
-        });
-        counted();
-        return json(200, result, cors);
-      }
-
-      const opinion = await checkMessage(body, env);
-      counted();
-      if (!opinion) return json(502, { error: 'no_opinion' }, cors);
-      return json(200, opinion, cors);
-    } catch (error) {
-      if (error instanceof InputError) return json(400, { error: 'invalid_input', message: error.message }, cors);
-      // The AI failing doesn't undo the check: the rules still ran on the device.
-      counted();
-      if (isBusy(error)) return json(503, { error: 'busy' }, cors);
-      // Log the kind of failure only, never what the person sent.
-      console.error('request failed:', error?.status ?? error?.name);
-      return json(502, { error: 'upstream_failed' }, cors);
-    }
+    if (pathname === API_PATH) return check(request, env, ctx);
+    if (pathname === LOOKUP_PATH) return lookup(request, env, ctx);
+    if (pathname === STATS_PATH && request.method === 'GET') return stats(env);
+    // Anything else that isn't a file of the site.
+    if (env.ASSETS) return env.ASSETS.fetch(request);
+    return new Response('Not found', { status: 404 });
   },
 
   // Runs on the cron in wrangler.toml to keep the FTC report copy current.
   async scheduled(event, env, ctx) {
-    if (!env.REPORTS || !env.FTC_API_KEY) return;
+    if (!env.DB || !env.FTC_API_KEY) return;
     ctx.waitUntil(
-      importReports({ db: env.REPORTS, apiKey: env.FTC_API_KEY, pages: Number(env.FTC_PAGES_PER_RUN) || undefined })
+      importReports({ db: env.DB, apiKey: env.FTC_API_KEY, pages: Number(env.FTC_PAGES_PER_RUN) || undefined })
         .then((count) => console.log('ftc import rows:', count))
         .catch((error) => console.error('ftc import failed:', error?.message)),
     );

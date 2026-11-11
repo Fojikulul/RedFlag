@@ -1,15 +1,14 @@
 {
   "name": "redflag-ai",
   "version": "1.0.0",
-  "description": "Cloudflare Worker that gives RedFlag an AI double-check and a phone number lookup.",
+  "description": "Cloudflare Worker that serves RedFlag, runs the AI check and looks up phone numbers.",
   "private": true,
   "type": "module",
   "license": "MIT",
   "scripts": {
     "dev": "wrangler dev --port 8787 --test-scheduled",
-    "db:init": "wrangler d1 execute redflag-reports --local --file=schema.sql",
-    "db:init:remote": "wrangler d1 execute redflag-reports --remote --file=schema.sql",
-    "counts": "wrangler d1 execute redflag-reports --remote --command \"SELECT day, kind, count FROM daily_counts ORDER BY day\"",
+    "db:init": "wrangler d1 execute redflag-stats --local --file=schema.sql",
+    "db:init:remote": "wrangler d1 execute redflag-stats --remote --file=schema.sql",
     "deploy": "wrangler deploy"
   },
   "dependencies": {

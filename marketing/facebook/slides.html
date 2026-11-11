@@ -1,0 +1,388 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>RedFlag Facebook Carousel</title>
+<!--
+  Facebook carousel, 1080x1080 per slide.
+  Open with ?s=1 ... ?s=6 to show one slide (that's what render.sh screenshots).
+  Open with no query to see all six stacked for review.
+-->
+<style>
+  @font-face {
+    font-family: 'Manrope';
+    src: url('../../assets/fonts/manrope-latin.woff2') format('woff2');
+    font-weight: 200 800;
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+  }
+  @font-face {
+    font-family: 'Manrope';
+    src: url('../../assets/fonts/manrope-cyrillic.woff2') format('woff2');
+    font-weight: 200 800;
+    unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+  }
+
+  :root {
+    --bg: #0d0c0b;
+    --surface: #171513;
+    --surface-raised: #211e1b;
+    --line: #2e2a26;
+    --ink: #f2efea;
+    --muted: #bdb6ac;
+    --accent: #e5251b;
+    --accent-ink: #ff6a5e;
+    --accent-soft: rgba(229, 37, 27, 0.16);
+    --red: #b8201a;
+    --yellow: #f2b33d;
+    --green: #1d6f41;
+    --green-ink: #7fd9a3;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: #000; }
+  body { font-family: 'Manrope', system-ui, sans-serif; color: var(--ink); }
+
+  .slide {
+    position: relative;
+    width: 1080px;
+    height: 1080px;
+    overflow: hidden;
+    background: var(--bg);
+    padding: 84px 84px 0;
+    display: flex;
+    flex-direction: column;
+  }
+  body.review .slide { margin: 0 auto 40px; }
+  body.single .slide { display: none; }
+  body.single .slide.on { display: flex; }
+
+  /* soft red glow in one corner, different per slide */
+  .slide::before {
+    content: '';
+    position: absolute;
+    width: 900px; height: 900px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(229,37,27,0.20), rgba(229,37,27,0) 65%);
+    top: -420px; right: -380px;
+    pointer-events: none;
+  }
+  .slide.glow-left::before { left: -420px; right: auto; top: auto; bottom: -460px; }
+
+  .slide > * { position: relative; }
+
+  .kicker {
+    font-size: 30px;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent-ink);
+    margin-bottom: 28px;
+  }
+  h1 {
+    font-size: 104px;
+    line-height: 1.0;
+    font-weight: 800;
+    letter-spacing: -0.035em;
+  }
+  h2 {
+    font-size: 78px;
+    line-height: 1.04;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+  }
+  .red { color: var(--accent); }
+
+  /* footer bar on every slide */
+  .foot {
+    position: absolute;
+    left: 84px; right: 84px; bottom: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 30px;
+    font-weight: 700;
+    color: var(--muted);
+  }
+  .brand {
+    display: flex; align-items: center; gap: 14px;
+    font-size: 44px; font-weight: 800; letter-spacing: -0.04em; color: var(--ink);
+  }
+  .brand b { color: var(--accent); }
+  .link { white-space: nowrap; }
+  .swipe { display: flex; align-items: center; gap: 14px; color: var(--ink); }
+  .swipe svg { width: 44px; height: 44px; }
+  .count { color: var(--muted); }
+
+  /* slide 1: the fake text message */
+  .phone {
+    margin-top: 56px;
+    background: var(--surface);
+    border: 2px solid var(--line);
+    border-radius: 36px;
+    padding: 36px 40px 40px;
+    width: 860px;
+  }
+  .phone .from {
+    font-size: 28px; font-weight: 700; color: var(--muted);
+    display: flex; justify-content: space-between; margin-bottom: 20px;
+  }
+  .bubble {
+    background: var(--surface-raised);
+    border-radius: 28px 28px 28px 8px;
+    padding: 30px 34px;
+    font-size: 42px;
+    line-height: 1.32;
+    font-weight: 600;
+  }
+  .hl {
+    background: var(--accent-soft);
+    box-shadow: inset 0 -5px 0 var(--accent);
+    padding: 0 4px;
+    border-radius: 4px;
+  }
+  .link { color: #8ab4ff; text-decoration: underline; text-underline-offset: 6px; }
+
+  /* slide 2: the four tricks */
+  .tricks { margin-top: 36px; display: grid; gap: 18px; }
+  .trick {
+    display: grid;
+    grid-template-columns: 88px 1fr;
+    gap: 28px;
+    align-items: start;
+    background: var(--surface);
+    border: 2px solid var(--line);
+    border-radius: 26px;
+    padding: 20px 28px;
+  }
+  .num {
+    width: 88px; height: 88px; border-radius: 50%;
+    background: var(--accent); color: #fff;
+    display: grid; place-items: center;
+    font-size: 48px; font-weight: 800;
+  }
+  .trick strong { display: block; font-size: 44px; font-weight: 800; line-height: 1.1; letter-spacing: -0.01em; }
+  .trick span { display: block; font-size: 32px; color: var(--muted); font-weight: 600; margin-top: 6px; line-height: 1.25; }
+
+  /* slide 3: steps */
+  .steps { margin-top: 64px; display: grid; gap: 30px; }
+  .step {
+    display: grid; grid-template-columns: 140px 1fr; gap: 36px; align-items: center;
+  }
+  .step .icon {
+    width: 140px; height: 140px; border-radius: 34px;
+    background: var(--surface-raised); border: 2px solid var(--line);
+    display: grid; place-items: center;
+  }
+  .step .icon svg { width: 76px; height: 76px; }
+  .step strong { display: block; font-size: 56px; font-weight: 800; letter-spacing: -0.02em; line-height: 1.05; }
+  .step span { display: block; font-size: 34px; color: var(--muted); font-weight: 600; margin-top: 8px; }
+  .lights { display: inline-flex; gap: 12px; vertical-align: middle; margin-left: 10px; }
+  .lights i { width: 30px; height: 30px; border-radius: 50%; display: inline-block; }
+
+  /* slide 4: example result */
+  .result {
+    margin-top: 44px;
+    border-radius: 34px;
+    overflow: hidden;
+    border: 2px solid var(--line);
+    background: var(--surface);
+  }
+  .verdict {
+    background: var(--red);
+    padding: 30px 40px;
+    display: flex; align-items: center; gap: 24px;
+    font-size: 64px; font-weight: 800; letter-spacing: -0.02em; color: #fff6f2;
+  }
+  .verdict svg { width: 72px; height: 72px; flex: none; }
+  .result .body { padding: 32px 40px 36px; }
+  .result h3 { font-size: 32px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 14px; }
+  .result ul { list-style: none; display: grid; gap: 12px; margin-bottom: 28px; }
+  .result li { font-size: 40px; font-weight: 700; display: flex; gap: 18px; align-items: baseline; line-height: 1.2; }
+  .result li::before { content: ''; width: 18px; height: 18px; border-radius: 50%; background: var(--accent); flex: none; transform: translateY(-4px); }
+  .result .todo { font-size: 38px; font-weight: 700; line-height: 1.3; }
+  .result .todo b { color: var(--green-ink); }
+
+  /* slide 5: promises */
+  .checks { margin-top: 56px; display: grid; gap: 34px; }
+  .check { display: grid; grid-template-columns: 84px 1fr; gap: 30px; align-items: center; }
+  .tick {
+    width: 84px; height: 84px; border-radius: 50%;
+    background: var(--green); display: grid; place-items: center;
+  }
+  .tick svg { width: 46px; height: 46px; }
+  .check strong { display: block; font-size: 50px; font-weight: 800; letter-spacing: -0.02em; line-height: 1.05; }
+  .check span { display: block; font-size: 32px; font-weight: 600; color: var(--muted); margin-top: 6px; }
+  .langs { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 14px; }
+  .langs em {
+    font-style: normal; font-size: 32px; font-weight: 800;
+    padding: 8px 22px; border-radius: 999px;
+    background: var(--surface-raised); border: 2px solid var(--line);
+  }
+
+  /* slide 6: call to action */
+  .cta-flag { width: 150px; height: 120px; margin-bottom: 40px; }
+  .rule {
+    margin-top: 52px;
+    background: var(--surface);
+    border-left: 12px solid var(--yellow);
+    border-radius: 20px;
+    padding: 30px 38px;
+    font-size: 40px; font-weight: 700; line-height: 1.3;
+  }
+  .rule b { color: var(--yellow); }
+  .share {
+    margin-top: 44px;
+    display: inline-flex; align-items: center; gap: 22px;
+    background: var(--accent); color: #fff;
+    border-radius: 999px;
+    padding: 26px 46px;
+    font-size: 44px; font-weight: 800;
+    align-self: flex-start;
+  }
+  .share svg { width: 48px; height: 48px; }
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <symbol id="flag" viewBox="0 0 48 40">
+      <path d="M6 2 C17 -2 28 7 45 1 L45 17 C28 23 17 14 6 18 Z" fill="#E5251B"/>
+      <rect x="2" y="0" width="5" height="40" rx="2.5" fill="#F2EFEA"/>
+    </symbol>
+    <symbol id="arrow" viewBox="0 0 24 24">
+      <path d="M4 12h15M13 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+    <symbol id="tickmark" viewBox="0 0 24 24">
+      <path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+  </defs>
+</svg>
+
+<!-- 1. Hook -->
+<section class="slide" data-s="1">
+  <div class="kicker">Scam alert</div>
+  <h1>Got a text that<br>feels <span class="red">wrong?</span></h1>
+  <div class="phone">
+    <div class="from"><span>+1 (844) 555-0182</span><span>Today 9:41 AM</span></div>
+    <div class="bubble">
+      USPS: Your package is on hold. Pay the
+      <span class="hl">$1.99 redelivery fee</span>
+      <span class="hl">today</span> or it will be returned:
+      <span class="link">usps-redeliver-help.com</span>
+    </div>
+  </div>
+  <div class="foot">
+    <div class="brand"><svg width="40" height="34"><use href="#flag"/></svg><span>redflag<b>.</b></span></div>
+    <div class="swipe">Swipe to see how to tell <svg><use href="#arrow"/></svg></div>
+  </div>
+</section>
+
+<!-- 2. The four tricks -->
+<section class="slide glow-left" data-s="2">
+  <h2>Scammers use the<br>same <span class="red">4 tricks</span></h2>
+  <div class="tricks">
+    <div class="trick"><div class="num">1</div><div><strong>They rush you</strong><span>"Act today or your account will be closed."</span></div></div>
+    <div class="trick"><div class="num">2</div><div><strong>They want odd payments</strong><span>Gift cards, Bitcoin, wire transfers, cash pickup.</span></div></div>
+    <div class="trick"><div class="num">3</div><div><strong>They pose as someone you trust</strong><span>Your bank, Medicare, the IRS, a grandchild.</span></div></div>
+    <div class="trick"><div class="num">4</div><div><strong>They ask for a code</strong><span>"Read me the 6-digit code we just texted you."</span></div></div>
+  </div>
+  <div class="foot">
+    <div class="brand"><svg width="40" height="34"><use href="#flag"/></svg><span>redflag<b>.</b></span></div>
+    <div class="count">2 / 6</div>
+  </div>
+</section>
+
+<!-- 3. How it works -->
+<section class="slide" data-s="3">
+  <div class="kicker">Free tool</div>
+  <h2>RedFlag checks the<br>message <span class="red">for you</span></h2>
+  <div class="steps">
+    <div class="step">
+      <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="#F2EFEA" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="8" width="12" height="13" rx="2"/><path d="M16 8V5a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h2"/></svg></div>
+      <div><strong>1. Copy the message</strong><span>A text, an email or a link.</span></div>
+    </div>
+    <div class="step">
+      <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="#F2EFEA" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3h6v1M9 11h6M9 15h4"/></svg></div>
+      <div><strong>2. Paste it into RedFlag</strong><span>On your phone or computer.</span></div>
+    </div>
+    <div class="step">
+      <div class="icon"><svg viewBox="0 0 48 40" width="76" height="64"><use href="#flag"/></svg></div>
+      <div><strong>3. Get a plain answer</strong><span>Red, yellow or green
+        <span class="lights" style="display:inline-flex;margin-top:0"><i style="background:var(--accent)"></i><i style="background:var(--yellow)"></i><i style="background:#2f9e5f"></i></span></span></div>
+    </div>
+  </div>
+  <div class="foot">
+    <div class="brand"><svg width="40" height="34"><use href="#flag"/></svg><span>redflag<b>.</b></span></div>
+    <div class="count">3 / 6</div>
+  </div>
+</section>
+
+<!-- 4. Example result -->
+<section class="slide glow-left" data-s="4">
+  <h2>Here's what it said<br>about that text</h2>
+  <div class="result">
+    <div class="verdict">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#fff6f2" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 2 20h20L12 3z"/><path d="M12 10v4M12 17.5v.5"/></svg>
+      Likely a scam
+    </div>
+    <div class="body">
+      <h3>What gave it away</h3>
+      <ul>
+        <li>Rushes you to pay today</li>
+        <li>Asks for a small "fee"</li>
+        <li>The link is not the real usps.com</li>
+      </ul>
+      <p class="todo"><b>What to do:</b> Don't tap the link. Delete the text. Check your package at usps.com.</p>
+    </div>
+  </div>
+  <div class="foot">
+    <div class="brand"><svg width="40" height="34"><use href="#flag"/></svg><span>redflag<b>.</b></span></div>
+    <div class="count">4 / 6</div>
+  </div>
+</section>
+
+<!-- 5. Free and private -->
+<section class="slide" data-s="5">
+  <h2>Free, private and<br>easy to read</h2>
+  <div class="checks">
+    <div class="check"><div class="tick"><svg><use href="#tickmark"/></svg></div><div><strong>Free. No sign-up.</strong><span>No account, no email, no payment.</span></div></div>
+    <div class="check"><div class="tick"><svg><use href="#tickmark"/></svg></div><div><strong>Your message is never saved</strong><span>It's checked, then forgotten. Never kept or sold.</span></div></div>
+    <div class="check"><div class="tick"><svg><use href="#tickmark"/></svg></div><div><strong>Big text and read-aloud</strong><span>Make it larger, or have the answer read to you.</span></div></div>
+    <div class="check"><div class="tick"><svg><use href="#tickmark"/></svg></div><div><strong>Works in 4 languages</strong>
+      <div class="langs"><em>English</em><em>Українська</em><em>Русский</em><em>Español</em></div></div></div>
+  </div>
+  <div class="foot">
+    <div class="brand"><svg width="40" height="34"><use href="#flag"/></svg><span>redflag<b>.</b></span></div>
+    <div class="count">5 / 6</div>
+  </div>
+</section>
+
+<!-- 6. Call to action -->
+<section class="slide glow-left" data-s="6">
+  <svg class="cta-flag" viewBox="0 0 48 40"><use href="#flag"/></svg>
+  <h1>Not sure?<br><span class="red">Check it first.</span></h1>
+  <div class="rule">
+    <b>Remember:</b> your bank, Medicare and the IRS never ask for gift cards.
+  </div>
+  <div class="share">
+    Free link in the post above
+    <svg viewBox="0 0 24 24"><path d="M12 20V5M5 11l7-7 7 7" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  </div>
+  <div class="foot">
+    <div class="brand"><svg width="40" height="34"><use href="#flag"/></svg><span>redflag<b>.</b></span></div>
+    <div class="count">Share it with someone you love</div>
+  </div>
+</section>
+
+<script>
+  const s = new URLSearchParams(location.search).get('s');
+  if (s) {
+    document.body.classList.add('single');
+    document.querySelector(`.slide[data-s="${s}"]`).classList.add('on');
+  } else {
+    document.body.classList.add('review');
+  }
+</script>
+</body>
+</html>

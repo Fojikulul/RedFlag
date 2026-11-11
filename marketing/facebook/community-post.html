@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>RedFlag Community Post</title>
+<!--
+  One portrait picture (1080x1350, the size Facebook shows biggest in the feed)
+  for a local community group post. Render with render-post.sh.
+-->
+<style>
+  @font-face {
+    font-family: 'Manrope';
+    src: url('../../assets/fonts/manrope-latin.woff2') format('woff2');
+    font-weight: 200 800;
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+  }
+  @font-face {
+    font-family: 'Manrope';
+    src: url('../../assets/fonts/manrope-cyrillic.woff2') format('woff2');
+    font-weight: 200 800;
+    unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+  }
+
+  :root {
+    --bg: #0d0c0b;
+    --surface: #171513;
+    --surface-raised: #211e1b;
+    --line: #2e2a26;
+    --ink: #f2efea;
+    --muted: #bdb6ac;
+    --accent: #e5251b;
+    --accent-ink: #ff6a5e;
+    --accent-soft: rgba(229, 37, 27, 0.16);
+    --green-ink: #7fd9a3;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: #000; }
+  body { font-family: 'Manrope', system-ui, sans-serif; color: var(--ink); }
+
+  .post {
+    position: relative;
+    width: 1080px;
+    height: 1350px;
+    overflow: hidden;
+    background: var(--bg);
+    padding: 80px 80px 0;
+  }
+  .post::before {
+    content: '';
+    position: absolute;
+    width: 1000px; height: 1000px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(229,37,27,0.22), rgba(229,37,27,0) 65%);
+    top: -460px; right: -420px;
+  }
+  .post > * { position: relative; }
+
+  .kicker {
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent-ink);
+    margin-bottom: 26px;
+  }
+  h1 {
+    font-size: 86px;
+    line-height: 1.0;
+    font-weight: 800;
+    letter-spacing: -0.035em;
+  }
+  h1 .red { color: var(--accent); display: block; }
+
+  .phone {
+    margin-top: 42px;
+    background: var(--surface);
+    border: 2px solid var(--line);
+    border-radius: 36px;
+    padding: 30px 36px 34px;
+  }
+  .from {
+    display: flex; justify-content: space-between;
+    font-size: 26px; font-weight: 700; color: var(--muted);
+    margin-bottom: 18px;
+  }
+  .bubble {
+    background: var(--surface-raised);
+    border-radius: 28px 28px 28px 8px;
+    padding: 26px 30px;
+    font-size: 36px;
+    line-height: 1.34;
+    font-weight: 600;
+  }
+  .hl {
+    background: var(--accent-soft);
+    box-shadow: inset 0 -4px 0 var(--accent);
+    padding: 0 4px;
+    border-radius: 4px;
+  }
+  .verdict {
+    display: flex; align-items: center; gap: 22px;
+    margin-top: 22px;
+    padding: 22px 26px;
+    border-radius: 24px;
+    background: rgba(184, 32, 26, 0.22);
+    border: 2px solid rgba(229, 37, 27, 0.6);
+  }
+  .verdict svg { flex: none; width: 64px; height: 64px; }
+  .verdict b { display: block; font-size: 38px; font-weight: 800; }
+  .verdict span { font-size: 27px; color: var(--muted); font-weight: 600; }
+
+  .points {
+    list-style: none;
+    margin-top: 38px;
+    display: grid;
+    gap: 16px;
+  }
+  .points li {
+    display: flex; align-items: center; gap: 20px;
+    font-size: 34px; font-weight: 700;
+  }
+  .points svg { flex: none; width: 44px; height: 44px; color: var(--green-ink); }
+  .points small { color: var(--muted); font-weight: 600; font-size: 30px; }
+
+  .foot {
+    position: absolute;
+    left: 80px; right: 80px; bottom: 60px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .brand {
+    font-size: 48px; font-weight: 800; letter-spacing: -0.04em;
+  }
+  .brand b { color: var(--accent); }
+  .url {
+    display: inline-block;
+    padding: 18px 28px;
+    border-radius: 999px;
+    background: var(--accent);
+    font-size: 34px; font-weight: 800; letter-spacing: -0.01em;
+    white-space: nowrap;
+  }
+</style>
+</head>
+<body>
+  <main class="post">
+    <p class="kicker">For our neighbors</p>
+    <h1>Got a strange text?<span class="red">Check it before you reply.</span></h1>
+
+    <div class="phone">
+      <p class="from"><span>+1 (202) 555-0173</span><span>Today 9:14 AM</span></p>
+      <p class="bubble">Final reminder: your vehicle has an <span class="hl">unpaid toll</span> of $12.50. <span class="hl">Pay within 24 hours</span> to avoid a $150 late fee: <span class="hl">ezpass-tolls.top</span></p>
+      <div class="verdict">
+        <svg viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="22" fill="#e5251b"/><path d="M24 12v15" stroke="#fff" stroke-width="5" stroke-linecap="round"/><circle cx="24" cy="35" r="3" fill="#fff"/></svg>
+        <div><b>Likely a scam</b><span>Don't click, don't pay. Check your account another way.</span></div>
+      </div>
+    </div>
+
+    <ul class="points">
+      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>Free. No sign-up, no app to install.</li>
+      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>Your message is never saved.</li>
+      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg><span>English, Español, Українська, Русский</span></li>
+    </ul>
+
+    <div class="foot">
+      <p class="brand">redflag<b>.</b></p>
+      <p class="url">redflag.redflag-ai.workers.dev</p>
+    </div>
+  </main>
+</body>
+</html>

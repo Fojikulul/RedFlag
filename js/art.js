@@ -42,8 +42,11 @@ function scan() {
   for (let ring = 1; ring <= 6; ring++) {
     parts.push(shape('circle', { cx: CENTER, cy: CENTER, r: ring * 13, class: 'art-dotted', 'data-part': 'ring' }));
   }
+  // Motion turns SVG parts around the middle of their own bounding box, so an
+  // invisible twin below the center keeps that middle on the radar's center.
   const sweep = shape('g', { 'data-part': 'sweep' });
   sweep.append(shape('line', { x1: CENTER, y1: CENTER, x2: CENTER, y2: CENTER - 80, class: 'art-accent' }));
+  sweep.append(shape('line', { x1: CENTER, y1: CENTER, x2: CENTER, y2: CENTER + 80, stroke: 'none' }));
   parts.push(sweep);
   parts.push(shape('circle', { cx: CENTER + 34, cy: CENTER - 40, r: 6, class: 'art-dot', 'data-part': 'blip' }));
   return svg(parts);
@@ -52,7 +55,10 @@ function scan() {
 // A ring closing, then rays bursting out of it.
 function verdict() {
   const parts = [shape('circle', { cx: CENTER, cy: CENTER, r: 78, class: 'art-strong', pathLength: 1, 'data-part': 'draw' })];
+  // An invisible circle keeps the burst's bounding box centered, so it grows
+  // out of the middle (see the note in scan()).
   const rays = shape('g', { 'data-part': 'burst' });
+  rays.append(shape('circle', { cx: CENTER, cy: CENTER, r: 80, fill: 'none', stroke: 'none' }));
   const count = 36;
   for (let i = 0; i < count; i++) {
     const angle = (i / count) * Math.PI * 2;

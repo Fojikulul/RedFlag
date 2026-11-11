@@ -1,0 +1,18 @@
+# Files Cloudflare must not publish as part of the site (see server/wrangler.toml).
+.git
+.github
+.claude
+.wrangler
+.dev.vars
+.editorconfig
+.gitattributes
+.gitignore
+node_modules
+server
+scripts
+tests
+marketing
+package.json
+package-lock.json
+README.md
+BUILD_PROMPT.md

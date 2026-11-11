@@ -473,6 +473,17 @@ textarea {
   display: block;
 }
 
+/* Ukrainian and Russian words run much longer than English ones. */
+:lang(uk) .display,
+:lang(ru) .display {
+  font-size: clamp(2.3rem, 4.6vw, 4.2rem);
+}
+
+.display {
+  overflow-wrap: break-word;
+  hyphens: auto;
+}
+
 .section-title {
   font-size: clamp(1.9rem, 4vw, 2.9rem);
   font-weight: 800;
@@ -565,6 +576,7 @@ textarea {
 
 .hero-intro {
   grid-area: intro;
+  min-width: 0;
   display: grid;
   gap: 22px;
   justify-items: start;
@@ -719,10 +731,6 @@ textarea {
   font-weight: 700;
 }
 
-.hero-tool .tool-privacy:has(.privacy-lock[hidden]) {
-  align-items: flex-start;
-}
-
 .tool-privacy svg {
   flex: none;
   width: 20px;
@@ -783,6 +791,16 @@ textarea {
   color: var(--verdict-green-ink);
 }
 
+/* Shown while the AI reads the message. */
+.verdict-checking {
+  background: var(--surface-raised);
+  color: var(--ink);
+}
+
+.verdict-checking .verdict-spinner {
+  animation: spin 0.9s linear infinite;
+}
+
 /* A phone number nobody has reported. Neutral on purpose: it isn't "safe". */
 .verdict-unknown {
   background: var(--surface-raised);
@@ -808,19 +826,52 @@ textarea {
   opacity: 0.9;
 }
 
-/* What the AI double-check did to the verdict. */
-.verdict-ai {
-  margin-top: 10px;
+.verdict-note {
+  margin-top: 8px;
   font-size: 0.95rem;
-  font-weight: 700;
+  font-weight: 600;
+  opacity: 0.9;
 }
 
-.verdict .ai-loading::before {
-  width: 18px;
-  height: 18px;
-  border-color: currentColor;
-  border-top-color: transparent;
-  opacity: 0.8;
+.verdict-scores {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+  max-width: 26rem;
+}
+
+.verdict-scores .verdict-score {
+  margin-top: 0;
+}
+
+.score-row {
+  display: grid;
+  gap: 6px;
+}
+
+.score-row.is-main .verdict-score {
+  font-size: 1.05rem;
+  opacity: 1;
+}
+
+.score-bar {
+  display: block;
+  height: 8px;
+  border-radius: var(--radius-pill);
+  background: currentColor;
+  background: color-mix(in srgb, currentColor 22%, transparent);
+  overflow: hidden;
+}
+
+.score-row:not(.is-main) .score-bar {
+  height: 5px;
+}
+
+.score-fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: currentColor;
 }
 
 .result-body {
@@ -1051,12 +1102,6 @@ mark {
   overflow: clip;
 }
 
-.result-row-body .ai-panel {
-  padding: 0;
-  border: 0;
-  background: none;
-}
-
 .tag {
   display: inline-block;
   padding: 4px 12px;
@@ -1067,90 +1112,10 @@ mark {
   font-weight: 800;
 }
 
-/* AI second opinion */
-
-.ai-panel {
-  display: grid;
-  gap: 14px;
-  padding: 20px;
-  border: 1px solid var(--line-strong);
-  border-radius: var(--radius-sm);
-  background: var(--bg);
-}
-
-.ai-panel h3 {
-  font-size: 1.2rem;
-  font-weight: 800;
-}
-
-.ai-panel p {
-  color: var(--muted);
-}
-
-.ai-panel .btn {
-  justify-self: start;
-}
-
-.ai-loading {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  font-weight: 700;
-}
-
-.ai-loading::before {
-  content: '';
-  flex: none;
-  width: 22px;
-  height: 22px;
-  border: 3px solid var(--line-strong);
-  border-top-color: var(--accent-ink);
-  border-radius: 50%;
-  animation: spin 0.9s linear infinite;
-}
-
 @keyframes spin {
   to {
     transform: rotate(360deg);
   }
-}
-
-.ai-verdict {
-  display: inline-block;
-  justify-self: start;
-  padding: 6px 14px;
-  border-radius: var(--radius-pill);
-  font-weight: 800;
-}
-
-.ai-verdict-red {
-  background: var(--verdict-red);
-  color: var(--verdict-red-ink);
-}
-
-.ai-verdict-yellow {
-  background: var(--verdict-yellow);
-  color: var(--verdict-yellow-ink);
-}
-
-.ai-verdict-green {
-  background: var(--verdict-green);
-  color: var(--verdict-green-ink);
-}
-
-.ai-verdict-unknown {
-  background: var(--surface-raised);
-  border: 1px solid var(--line-strong);
-}
-
-.ai-panel .ai-explanation {
-  color: var(--ink);
-  font-size: 1.05rem;
-}
-
-.ai-panel .ai-advice {
-  color: var(--ink);
-  font-weight: 700;
 }
 
 /* Phone number lookup */
@@ -1198,10 +1163,6 @@ mark {
   cursor: progress;
 }
 
-.phone-loading {
-  padding: 22px clamp(18px, 3vw, 28px);
-}
-
 .phone-panel {
   display: grid;
   gap: 12px;
@@ -1236,6 +1197,73 @@ mark {
   border: 0;
   border-radius: var(--radius-sm);
   color-scheme: light;
+}
+
+.phone-loading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 22px clamp(18px, 3vw, 28px);
+  font-weight: 700;
+}
+
+.phone-loading::before {
+  content: '';
+  flex: none;
+  width: 22px;
+  height: 22px;
+  border: 3px solid var(--line-strong);
+  border-top-color: var(--accent-ink);
+  border-radius: 50%;
+  animation: phone-spin 0.9s linear infinite;
+}
+
+@keyframes phone-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* What the web search said about a number. */
+.phone-web {
+  display: grid;
+  gap: 14px;
+}
+
+.phone-web p {
+  color: var(--muted);
+}
+
+.phone-pill {
+  justify-self: start;
+  padding: 6px 14px;
+  border-radius: var(--radius-pill);
+  font-weight: 800;
+}
+
+.phone-pill-red {
+  background: var(--verdict-red);
+  color: var(--verdict-red-ink);
+}
+
+.phone-pill-yellow {
+  background: var(--verdict-yellow);
+  color: var(--verdict-yellow-ink);
+}
+
+.phone-pill-unknown {
+  background: var(--surface-raised);
+  border: 1px solid var(--line-strong);
+}
+
+.phone-web .phone-explanation {
+  color: var(--ink);
+  font-size: 1.05rem;
+}
+
+.phone-web .phone-advice {
+  color: var(--ink);
+  font-weight: 700;
 }
 
 /* What it catches */
@@ -1687,12 +1715,18 @@ mark {
   color: var(--muted);
 }
 
+/* The number box sits at the bottom of the card, so boxes in cards side by
+   side line up even when their descriptions are different lengths. */
+.stat:has(.stat-panel) {
+  grid-template-rows: auto auto 1fr;
+}
+
 .stat-panel {
   display: flex;
   align-items: center;
   justify-content: center;
+  align-self: end;
   gap: 12px;
-  margin-top: auto;
   min-height: 88px;
   padding: 18px 22px;
   border-radius: var(--radius-sm);
@@ -1720,6 +1754,22 @@ mark {
   height: 10px;
   border-radius: 50%;
   background: var(--accent);
+}
+
+/* The live usage count spans the whole row. */
+.stat-usage {
+  grid-column: 1 / -1;
+  min-height: 0;
+}
+
+.stat-usage .stat-panel {
+  flex-wrap: wrap;
+  column-gap: 18px;
+}
+
+.stat-usage-warned {
+  color: var(--muted);
+  font-weight: 700;
 }
 
 @media (min-width: 760px) {

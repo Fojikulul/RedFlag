@@ -1,7 +1,8 @@
-// Calls to Google's Gemini API. Kept apart from the Worker so the request
-// building and answer reading can be tested without the network.
+// Calls to Google's Gemini API, used for the phone number web search. Kept
+// apart from the Worker so the request building and answer reading can be
+// tested without the network.
 
-import { LANGUAGES, normalizeOpinion, RESPONSE_SCHEMA, SYSTEM_PROMPT } from './check.js';
+import { LANGUAGES } from './check.js';
 
 export const DEFAULT_GEMINI_MODEL = 'gemini-3.8-flash';
 const API_BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
@@ -24,13 +25,6 @@ export async function callGemini({ apiKey, model = DEFAULT_GEMINI_MODEL, body, f
   });
   if (!response.ok) throw new GeminiError(response.status);
   return response.json();
-}
-
-// Gemini reads JSON Schema but not every keyword, so the shared schema is
-// passed without the ones it doesn't use.
-function geminiSchema(schema) {
-  const { additionalProperties, ...rest } = schema;
-  return rest;
 }
 
 /** The answer text, or null when the model stopped early or was blocked. */
@@ -56,27 +50,6 @@ export function parseJson(text) {
   } catch {
     return null;
   }
-}
-
-// Message check: the same prompt and answer shape as the Claude version.
-
-export function buildCheckRequest({ text, lang }) {
-  return {
-    systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
-    contents: [{
-      role: 'user',
-      parts: [{ text: `Answer in ${LANGUAGE_NAMES[lang]}.\n\n<message>\n${text}\n</message>` }],
-    }],
-    generationConfig: {
-      responseMimeType: 'application/json',
-      responseJsonSchema: geminiSchema(RESPONSE_SCHEMA),
-      thinkingConfig: { thinkingLevel: 'low' },
-    },
-  };
-}
-
-export function readCheckResponse(response) {
-  return normalizeOpinion(parseJson(answerText(response)));
 }
 
 // Phone lookup: Gemini searches Google for the number and sums up what
