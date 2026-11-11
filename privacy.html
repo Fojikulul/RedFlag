@@ -21,25 +21,42 @@
 
   <main class="legal">
     <h1>Privacy</h1>
-    <p>Last updated October 29, 2026.</p>
+    <p>Last updated November 11, 2026.</p>
     <p class="draft-note">Draft. This page describes how the site works today. It has not been reviewed by a lawyer yet.</p>
 
     <h2>The short version</h2>
-    <p>RedFlag checks your message inside your own browser. We do not collect, store or sell the messages you check, and we do not ask who you are.</p>
+    <p>RedFlag does not store or sell the messages or phone numbers you check, and we do not ask who you are. The only thing we keep is a count of how many checks happen each day. Our rules check your message inside your own browser. To double-check it, the message is also sent to an AI service run by Google, and Google may keep it. Details are below.</p>
 
     <h2>Messages you check</h2>
     <ul>
-      <li>When you press <strong>Check it</strong>, the message is analyzed by code running on your phone or computer. It is not sent anywhere.</li>
-      <li>The message is gone when you close or reload the page.</li>
+      <li>When you press <strong>Check it</strong>, our rules analyze the message with code running on your phone or computer.</li>
+      <li>On our side, the message is gone when you close or reload the page.</li>
     </ul>
 
-    <h2>The AI second opinion (optional)</h2>
-    <p>If you press <strong>Ask the AI</strong>, that one message is sent over an encrypted connection to our server, which passes it to Anthropic's AI service to be checked, and returns the answer to you.</p>
+    <h2>The AI double-check</h2>
+    <p>Each message you check is also sent over an encrypted connection to our server, which passes it to Google's Gemini AI service and returns the answer to you. The line under the Check button says this before you press it.</p>
     <ul>
       <li>Our server does not save or log the message.</li>
-      <li>Anthropic processes the message to produce the answer under its own commercial terms and privacy policy.</li>
+      <li>Google processes the message under its own terms and privacy policy. <strong>Google may keep the message and use it to improve its products, and people at Google may read it.</strong></li>
+      <li>Because of that, take out names, addresses, and account or card numbers before you check a message, if you can.</li>
       <li>To limit misuse, our server counts how many checks come from each internet address per minute. It does not keep that address after the limit resets.</li>
-      <li>Nothing is sent unless you press the button.</li>
+      <li>If the AI double-check is switched off, messages are checked only in your browser and are not sent anywhere.</li>
+    </ul>
+
+    <h2>Phone number lookup</h2>
+    <p>If you type a phone number and press <strong>Look it up</strong>, that number is sent over an encrypted connection to our server. Nothing is sent until you press the button.</p>
+    <ul>
+      <li>Our server compares the number with its own copy of the public reports people have filed with the U.S. Federal Trade Commission (FTC). The number you look up is not sent to the FTC.</li>
+      <li>Our server also asks Google's Gemini AI service to search the web for the number. Google receives the number and may keep it and use it to improve its products, the same as with messages.</li>
+      <li>Our server does not save or log the numbers people look up, and it is not told whose number it is or who is asking.</li>
+      <li>The same per-minute limit applies as for message checks.</li>
+    </ul>
+
+    <h2>Counting how much the site is used</h2>
+    <p>Our server keeps one number per day for message checks and one for phone lookups, for example "November 11: 212 checks, 31 lookups". The total is shown on the site.</p>
+    <ul>
+      <li>That is all it keeps. It does not record the message, the phone number, the result, your internet address, or the time of day.</li>
+      <li>The count cannot be traced back to any person or any message.</li>
     </ul>
 
     <h2>Settings saved on your device</h2>

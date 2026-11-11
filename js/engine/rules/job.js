@@ -7,7 +7,15 @@ export default [
     severity: 'low',
     weight: 10,
     patterns: {
-      en: ['work from home', 'hiring (now|immediately)', 'part-time job'],
+      en: [
+        'work from home',
+        'hiring (now|immediately)',
+        'part-time job',
+        'online (job|work)',
+        'remote (job|work) opportunity',
+        'recruitment team',
+        'openings that (might|may) interest you',
+      ],
       uk: ['робот~ (з дому|вдома|на дому)', 'віддален~ робот~'],
       ru: ['работ~ (из дома|на дому)', 'удаленн~ работ~'],
       es: ['trabaj(o|a|e) desde casa', 'trabajo remoto'],
@@ -20,7 +28,9 @@ export default [
     weight: 25,
     patterns: {
       en: [
-        '(earn|make) \\$ ?\\d[\\d,]* (a|per|every) (day|week|hour)',
+        '(earn|make) \\$ ?\\d[\\d,]* (to \\$ ?\\d[\\d,]* )?(a |per |every )?(day|week|hour|daily|weekly)',
+        'work (just |only )?\\d+ (to \\d+ )?(minutes|hours) a day',
+        'same-day (payouts?|pay)',
         'no experience (needed|required|necessary)',
         'easy money',
         'mystery shopper',

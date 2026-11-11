@@ -1,6 +1,7 @@
 import { drawArt } from './art.js';
 import config from './config.js';
 import * as effects from './effects.js';
+import { combineVerdicts } from './engine/combine.js';
 import { analyze } from './engine/index.js';
 import { LANGUAGES, pickLanguage, t } from './i18n/index.js';
 
@@ -8,11 +9,15 @@ const LANG_KEY = 'redflag.lang';
 const TEXT_SIZE_KEY = 'redflag.textSize';
 const EXAMPLE_COUNT = 3;
 const AI_TIMEOUT_MS = 30_000;
+// The Worker takes up to 4000 characters; the start of a message is what matters.
+const AI_MAX_CHARS = 4000;
+const PHONE_TIMEOUT_MS = 45_000;
 
 const VERDICT_ICONS = {
   red: '<svg viewBox="0 0 48 48" aria-hidden="true"><path fill="currentColor" d="M16.5 4h15L44 16.5v15L31.5 44h-15L4 31.5v-15L16.5 4Z" opacity=".22"/><path fill="none" stroke="currentColor" stroke-width="3" d="M16.5 4h15L44 16.5v15L31.5 44h-15L4 31.5v-15L16.5 4Z"/><path fill="currentColor" d="M22 13h4v15h-4zM22 32h4v4h-4z"/></svg>',
   yellow: '<svg viewBox="0 0 48 48" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round" d="M24 5 45 42H3L24 5Z"/><path fill="currentColor" d="M22 18h4v13h-4zM22 34h4v4h-4z"/></svg>',
   green: '<svg viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="20" fill="none" stroke="currentColor" stroke-width="3"/><path fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" d="m15 24.5 6 6 12-13"/></svg>',
+  unknown: '<svg viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="20" fill="none" stroke="currentColor" stroke-width="3"/><path fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" d="M18.5 18.5a5.5 5.5 0 1 1 7.7 5c-1.4.7-2.2 1.7-2.2 3.2v1"/><path fill="currentColor" d="M22 32h4v4h-4z"/></svg>',
 };
 
 const state = {
@@ -23,6 +28,18 @@ const state = {
   // Result rows the visitor has opened for the current message.
   openRows: new Set(),
 };
+
+// The phone lookup is separate from the message check, with its own result.
+const lookup = {
+  status: null,
+  number: null,
+  result: null,
+  errorKey: null,
+  openRows: new Set(['ftc', 'web']),
+};
+
+// How many messages have been checked, from the Worker's daily count.
+let checkedCount = null;
 
 const elements = {
   form: document.getElementById('check-form'),
@@ -45,6 +62,14 @@ const elements = {
   localAgency: document.getElementById('local-agency-link'),
   footerFlag: document.getElementById('footer-flag'),
   flagWave: document.getElementById('flag-wave'),
+  phoneSection: document.getElementById('phone'),
+  phoneLink: document.getElementById('phone-link'),
+  phoneForm: document.getElementById('phone-form'),
+  phoneButton: document.getElementById('phone-button'),
+  phoneInput: document.getElementById('phone-number'),
+  phoneError: document.getElementById('phone-error'),
+  phoneResult: document.getElementById('phone-result'),
+  phoneAnnouncer: document.getElementById('phone-announcer'),
 };
 
 // localStorage throws in some private-browsing modes. The page still works,
@@ -76,8 +101,11 @@ function setLanguage(lang) {
   state.lang = lang;
   document.documentElement.lang = lang;
 
+  // With the AI turned on, the privacy wording has to say that messages
+  // leave the device, so those spots carry a second key.
   for (const node of document.querySelectorAll('[data-i18n]')) {
-    node.textContent = t(node.dataset.i18n, lang);
+    const key = config.aiEndpoint && node.dataset.i18nAi ? node.dataset.i18nAi : node.dataset.i18n;
+    node.textContent = t(key, lang);
   }
 
   for (const node of document.querySelectorAll('[data-i18n-attr]')) {
@@ -102,6 +130,7 @@ function setLanguage(lang) {
   renderLocalAgency();
   updateClock();
   if (state.checkedText !== null) renderResult(state.checkedText, { announce: false });
+  renderPhone();
 }
 
 /** Builds the message as text nodes with <mark> around flagged spans. */
@@ -133,11 +162,11 @@ function uniqueByRule(flags) {
   return [...byRule.values()].sort((a, b) => b.weight - a.weight);
 }
 
-// A big labelled row that opens on tap. Which rows are open is remembered,
-// so switching language or asking the AI doesn't fold them back up.
-function resultRow(key, title, count, ...content) {
+// A big labelled row that opens on tap. Which rows are open is remembered in
+// `openRows`, so switching language or the AI answering doesn't fold them up.
+function resultRow(openRows, key, title, count, ...content) {
   const details = el('details', 'result-row');
-  details.open = state.openRows.has(key);
+  details.open = openRows.has(key);
 
   const summary = el('summary');
   summary.append(el('span', 'result-row-title', title));
@@ -148,11 +177,19 @@ function resultRow(key, title, count, ...content) {
   details.append(summary, body);
 
   details.addEventListener('toggle', () => {
-    if (details.open) state.openRows.add(key);
-    else state.openRows.delete(key);
+    if (details.open) openRows.add(key);
+    else openRows.delete(key);
   });
   effects.attachAccordion(details);
   return details;
+}
+
+// One line under the verdict saying what the AI double-check did to it.
+function aiNote(change) {
+  if (!config.aiEndpoint || !state.ai) return null;
+  if (state.ai.status === 'loading') return el('p', 'verdict-ai ai-loading', t('ai.loading', state.lang));
+  if (state.ai.status === 'error') return el('p', 'verdict-ai', t('ai.note.failed', state.lang));
+  return el('p', 'verdict-ai', t(`ai.note.${change}`, state.lang));
 }
 
 // The answer comes first: verdict, the one thing to do now, and two big
@@ -161,34 +198,42 @@ function resultRow(key, title, count, ...content) {
 function renderResult(text, { announce = true } = {}) {
   const { lang } = state;
   const result = analyze(text);
-  const verdictText = t(`result.verdict.${result.verdict}`, lang);
-  const summaryText = t(result.summaryKey, lang);
+  const opinion = state.ai?.status === 'done' ? state.ai.opinion : null;
+  const { verdict: finalVerdict, change } = combineVerdicts(result.verdict, opinion?.verdict);
+  const changed = change === 'raised' || change === 'lowered';
+  const verdictText = t(`result.verdict.${finalVerdict}`, lang);
+  const summaryText = t(changed ? `summary.${finalVerdict}` : result.summaryKey, lang);
 
-  // When the rules see nothing, a second look matters most, so offer it open.
-  if (announce && result.verdict === 'green' && config.aiEndpoint) state.openRows.add('ai');
+  // When the AI raised the warning, the rules have no advice that fits, so
+  // the AI's goes first. When it lowered the warning, the rules' careful
+  // advice stays on top.
+  const steps = result.adviceKeys.map((key) => t(key, lang));
+  if (change === 'raised' && opinion.advice) steps.unshift(opinion.advice);
 
-  const verdict = el('div', `verdict verdict-${result.verdict}`);
-  verdict.insertAdjacentHTML('afterbegin', VERDICT_ICONS[result.verdict]);
+  const verdict = el('div', `verdict verdict-${finalVerdict}`);
+  verdict.insertAdjacentHTML('afterbegin', VERDICT_ICONS[finalVerdict]);
   const verdictCopy = el('div');
   const heading = el('h2', 'verdict-title', verdictText);
   heading.id = 'result-title';
   verdictCopy.append(
     heading,
     el('p', 'verdict-summary', summaryText),
-    el('p', 'verdict-score', t('result.score', lang, { score: result.score })),
+    el('p', 'verdict-score', t(changed ? 'result.rulesScore' : 'result.score', lang, { score: result.score })),
   );
+  const note = aiNote(change);
+  if (note) verdictCopy.append(note);
   verdict.append(verdictCopy);
 
   const body = el('div', 'result-body');
 
-  if (result.adviceKeys.length > 0) {
-    const doFirst = el('div', `do-first do-first-${result.verdict}`);
-    doFirst.append(el('p', 'do-first-label', t('result.doFirst', lang)), el('p', 'do-first-text', t(result.adviceKeys[0], lang)));
+  if (steps.length > 0) {
+    const doFirst = el('div', `do-first do-first-${finalVerdict}`);
+    doFirst.append(el('p', 'do-first-label', t('result.doFirst', lang)), el('p', 'do-first-text', steps[0]));
     body.append(doFirst);
   }
 
   const tools = el('div', 'result-tools');
-  if (speechAvailable()) tools.append(readAloudButton(result, verdictText, summaryText));
+  if (speechAvailable()) tools.append(readAloudButton([verdictText, summaryText, note?.textContent ?? '', `${t('result.adviceTitle', lang)}:`, ...steps]));
   const again = el('button', 'btn btn-ghost btn-tool', t('result.again', lang));
   again.type = 'button';
   again.addEventListener('click', clear);
@@ -208,23 +253,20 @@ function renderResult(text, { announce = true } = {}) {
       );
       list.append(item);
     }
-    rows.append(resultRow('why', t('result.flagsTitle', lang), reasons.length, list));
+    rows.append(resultRow(state.openRows, 'why', t('result.flagsTitle', lang), reasons.length, list));
   }
 
   const advice = el('ol', 'advice');
-  for (const key of result.adviceKeys) advice.append(el('li', '', t(key, lang)));
-  rows.append(resultRow('advice', t('result.adviceTitle', lang), result.adviceKeys.length, advice));
+  for (const step of steps) advice.append(el('li', '', step));
+  rows.append(resultRow(state.openRows, 'advice', t('result.adviceTitle', lang), steps.length, advice));
 
   if (result.links.length > 0) {
-    rows.append(resultRow('links', t('result.linksTitle', lang), result.links.length, linkList(result.links)));
+    rows.append(resultRow(state.openRows, 'links', t('result.linksTitle', lang), result.links.length, linkList(result.links)));
   }
 
-  rows.append(resultRow('message', t('result.yourMessage', lang), undefined, highlightedMessage(text, result.highlights)));
+  rows.append(resultRow(state.openRows, 'message', t('result.yourMessage', lang), undefined, highlightedMessage(text, result.highlights)));
 
-  if (config.aiEndpoint) {
-    const title = t(result.verdict === 'green' ? 'ai.titleGreen' : 'ai.title', lang);
-    rows.append(resultRow('ai', title, undefined, aiPanel()));
-  }
+  if (config.aiEndpoint) rows.append(resultRow(state.openRows, 'ai', t('ai.title', lang), undefined, aiPanel()));
 
   body.append(rows, el('p', 'result-disclaimer', t('result.disclaimer', lang)));
 
@@ -236,6 +278,7 @@ function renderResult(text, { announce = true } = {}) {
     elements.announcer.textContent = `${verdictText}. ${summaryText}`;
     effects.revealResult(elements.result);
   }
+  return { verdictText, noteText: note?.textContent ?? '' };
 }
 
 // Read it to me: the verdict and what to do, spoken by the device. Only our
@@ -254,7 +297,7 @@ function stopReading() {
   if ('speechSynthesis' in window) window.speechSynthesis.cancel();
 }
 
-function readAloudButton(result, verdictText, summaryText) {
+function readAloudButton(parts) {
   const { lang } = state;
   const button = el('button', 'btn btn-primary btn-tool read-aloud');
   button.type = 'button';
@@ -262,8 +305,7 @@ function readAloudButton(result, verdictText, summaryText) {
   button.insertAdjacentHTML('afterbegin', '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4Z"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></svg>');
   button.append(label);
 
-  const steps = result.adviceKeys.map((key) => t(key, lang));
-  const script = [verdictText, summaryText, `${t('result.adviceTitle', lang)}:`, ...steps].join(' ');
+  const script = parts.filter(Boolean).join(' ');
 
   button.addEventListener('click', () => {
     if (window.speechSynthesis.speaking) {
@@ -372,8 +414,8 @@ function renderQuiz() {
   card.replaceChildren(...children);
 }
 
-// AI second opinion. Opt-in per message, because it is the one time the
-// text leaves the device.
+// AI double-check. Runs for every message when the Worker is set up, and
+// the line under the Check button tells the visitor so beforehand.
 
 function aiPanel() {
   const { lang } = state;
@@ -382,13 +424,9 @@ function aiPanel() {
 
   if (state.ai?.status === 'loading') {
     panel.append(el('p', 'ai-loading', t('ai.loading', lang)));
-    return panel;
-  }
-
-  if (state.ai?.status === 'done') {
+  } else if (state.ai?.status === 'done') {
     const { opinion } = state.ai;
     panel.append(
-      el('h3', '', t('ai.resultTitle', lang)),
       el('span', `ai-verdict ai-verdict-${opinion.verdict}`, t(`ai.verdict.${opinion.verdict}`, lang)),
       el('p', 'ai-explanation', opinion.explanation),
     );
@@ -398,25 +436,24 @@ function aiPanel() {
       panel.append(advice);
     }
     panel.append(el('p', '', t('ai.disclaimer', lang)));
-    return panel;
+  } else if (state.ai?.status === 'error') {
+    panel.append(el('p', 'tool-error', t(state.ai.messageKey, lang)));
+    const button = el('button', 'btn btn-primary', t('ai.retry', lang));
+    button.type = 'button';
+    button.addEventListener('click', () => askAi({ retry: true }));
+    panel.append(button);
   }
 
   panel.append(el('p', '', t('ai.text', lang)));
-  if (state.ai?.status === 'error') panel.append(el('p', 'tool-error', t(state.ai.messageKey, lang)));
-
-  const button = el('button', 'btn btn-primary', t('ai.button', lang));
-  button.type = 'button';
-  button.addEventListener('click', askAi);
-  panel.append(button);
   return panel;
 }
 
-async function askAi() {
+async function askAi({ render = true, retry = false } = {}) {
   const text = state.checkedText;
   if (text === null) return;
 
   state.ai = { status: 'loading' };
-  renderResult(text, { announce: false });
+  if (render) renderResult(text, { announce: false });
 
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), AI_TIMEOUT_MS);
@@ -425,7 +462,8 @@ async function askAi() {
     const response = await fetch(config.aiEndpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text, lang: state.lang }),
+      // A second try at the same message must not be counted as a new check.
+      body: JSON.stringify({ text: text.trim().slice(0, AI_MAX_CHARS), lang: state.lang, retry }),
       signal: controller.signal,
     });
     if (state.checkedText !== text) return;
@@ -444,11 +482,233 @@ async function askAi() {
     clearTimeout(timer);
   }
 
-  renderResult(text, { announce: false });
+  // When the AI changed the answer, show its reasons without making anyone
+  // hunt for them. When it failed, show the button to try again.
   if (state.ai.status === 'done') {
-    const { opinion } = state.ai;
-    elements.announcer.textContent = `${t('ai.resultTitle', state.lang)}: ${t(`ai.verdict.${opinion.verdict}`, state.lang)}. ${opinion.explanation}`;
+    const { change } = combineVerdicts(analyze(text).verdict, state.ai.opinion.verdict);
+    if (change === 'raised' || change === 'lowered') state.openRows.add('ai');
+  } else {
+    state.openRows.add('ai');
   }
+
+  const { verdictText, noteText } = renderResult(text, { announce: false });
+  elements.announcer.textContent = `${verdictText}. ${noteText}`;
+}
+
+// Phone number lookup. The number leaves the device only when the visitor
+// presses the button, and the Worker doesn't keep it.
+
+function lookupUrl() {
+  return `${config.aiEndpoint.replace(/\/+$/, '')}/lookup`;
+}
+
+// A first check here saves a trip to the server. The Worker checks again.
+function phoneProblem(number) {
+  if (number === '') return 'phone.empty';
+  const digits = number.replace(/\D/g, '');
+  if (/[^\d\s()+.\-]/.test(number) || digits.length < 8 || digits.length > 15) return 'phone.invalid';
+  return null;
+}
+
+// `day` is YYYY-MM-DD. Noon UTC keeps it on that date in every time zone.
+function formatDay(day) {
+  return new Intl.DateTimeFormat(state.lang, { dateStyle: 'long', timeZone: 'UTC' }).format(new Date(`${day}T12:00:00Z`));
+}
+
+function ftcPanel(ftc) {
+  const { lang } = state;
+  const panel = el('div', 'phone-panel');
+
+  if (ftc.status === 'not_us') {
+    panel.append(el('p', '', t('phone.ftcUs', lang)));
+  } else if (ftc.status !== 'done') {
+    panel.append(el('p', '', t('phone.ftcUnavailable', lang)));
+  } else if (ftc.count === 0) {
+    panel.append(el('p', '', t('phone.ftcNone', lang)), el('p', 'phone-fine', t('phone.ftcNote', lang)));
+  } else {
+    panel.append(el('p', 'phone-strong', t('phone.ftcCount', lang, { count: ftc.count, date: formatDay(ftc.lastReported) })));
+    if (ftc.subjects.length > 0) {
+      const list = el('ul', 'link-issues');
+      for (const slug of ftc.subjects) list.append(el('li', '', t(`phone.subject.${slug}`, lang)));
+      panel.append(el('p', '', t('phone.ftcSubjects', lang)), list);
+    }
+    if (ftc.robocall) panel.append(el('p', '', t('phone.ftcRobocall', lang)));
+    panel.append(el('p', 'phone-fine', t('phone.ftcNote', lang)));
+  }
+  return panel;
+}
+
+function webPanel(web) {
+  const { lang } = state;
+  const panel = el('div', 'ai-panel');
+  if (web.status !== 'done') {
+    panel.append(el('p', '', t('phone.webUnavailable', lang)));
+    return panel;
+  }
+
+  panel.append(
+    el('span', `ai-verdict ai-verdict-${web.verdict}`, t(`phone.verdict.${web.verdict}`, lang)),
+    el('p', 'ai-explanation', web.explanation),
+  );
+  if (web.advice) panel.append(el('p', 'ai-advice', `${t('ai.adviceLabel', lang)} ${web.advice}`));
+
+  const sources = web.sources.filter((source) => source.url.startsWith('https://'));
+  if (sources.length > 0) {
+    const list = el('ul', 'phone-sources');
+    for (const source of sources) {
+      const link = el('a', '', source.title);
+      link.href = source.url;
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      const item = el('li');
+      item.append(link);
+      list.append(item);
+    }
+    panel.append(el('p', '', t('phone.webSources', lang)), list);
+  }
+
+  // Google asks that its search suggestions are shown with a search answer.
+  // They arrive as ready-made HTML, so they go in a frame that can't run
+  // scripts or touch the page.
+  if (web.suggestions) {
+    const frame = el('iframe', 'phone-suggestions');
+    frame.title = t('phone.suggestions', lang);
+    frame.setAttribute('sandbox', 'allow-popups allow-popups-to-escape-sandbox');
+    frame.srcdoc = web.suggestions;
+    panel.append(frame);
+  }
+
+  panel.append(el('p', '', t('phone.webDisclaimer', lang)));
+  return panel;
+}
+
+// Same shape as a message result: the answer, the one thing to do, then
+// the details. There is no green here. Finding nothing is not "safe".
+function renderPhone() {
+  const { lang } = state;
+  const box = elements.phoneResult;
+
+  elements.phoneError.textContent = lookup.errorKey ? t(lookup.errorKey, lang) : '';
+  elements.phoneError.hidden = !lookup.errorKey;
+  elements.phoneButton.disabled = lookup.status === 'loading';
+
+  if (lookup.status === 'loading') {
+    box.replaceChildren(el('p', 'ai-loading phone-loading', t('phone.loading', lang)));
+    box.removeAttribute('aria-labelledby');
+    box.hidden = false;
+    return null;
+  }
+  if (lookup.status !== 'done') {
+    box.hidden = true;
+    box.replaceChildren();
+    return null;
+  }
+
+  const { result } = lookup;
+  // FTC reports are about unwanted calls, which is not the same as a scam.
+  // The page only says "scam" when the web search found scam reports too.
+  const webSaysScam = result.web.status === 'done' && result.web.verdict === 'red';
+  const wording = result.verdict === 'red' && !webSaysScam ? 'reported' : result.verdict;
+  const verdictText = t(`phone.verdict.${wording}`, lang);
+  const summaryText = t(`phone.summary.${wording}`, lang);
+  const adviceText = t('phone.advice', lang);
+
+  const verdict = el('div', `verdict verdict-${result.verdict}`);
+  verdict.insertAdjacentHTML('afterbegin', VERDICT_ICONS[result.verdict]);
+  const verdictCopy = el('div');
+  const heading = el('h3', 'verdict-title', verdictText);
+  heading.id = 'phone-result-title';
+  verdictCopy.append(
+    heading,
+    el('p', 'verdict-summary', summaryText),
+    el('p', 'verdict-score', t('phone.number', lang, { number: result.display })),
+  );
+  verdict.append(verdictCopy);
+
+  const body = el('div', 'result-body');
+  const doFirst = el('div', `do-first do-first-${result.verdict}`);
+  doFirst.append(el('p', 'do-first-label', t('result.doFirst', lang)), el('p', 'do-first-text', adviceText));
+  body.append(doFirst);
+
+  const tools = el('div', 'result-tools');
+  if (speechAvailable()) tools.append(readAloudButton([verdictText, summaryText, adviceText]));
+  const again = el('button', 'btn btn-ghost btn-tool', t('phone.again', lang));
+  again.type = 'button';
+  again.addEventListener('click', clearPhone);
+  tools.append(again);
+  body.append(tools);
+
+  const rows = el('div', 'result-rows');
+  const count = result.ftc.status === 'done' && result.ftc.count > 0 ? result.ftc.count : undefined;
+  rows.append(
+    resultRow(lookup.openRows, 'ftc', t('phone.ftcTitle', lang), count, ftcPanel(result.ftc)),
+    resultRow(lookup.openRows, 'web', t('phone.webTitle', lang), undefined, webPanel(result.web)),
+  );
+  body.append(rows, el('p', 'result-disclaimer', `${t('phone.spoofing', lang)} ${t('phone.report', lang)}`));
+
+  box.replaceChildren(verdict, body);
+  box.setAttribute('aria-labelledby', 'phone-result-title');
+  box.hidden = false;
+  return { verdictText, summaryText };
+}
+
+async function lookUpNumber() {
+  const number = elements.phoneInput.value.trim();
+  stopReading();
+
+  lookup.errorKey = phoneProblem(number);
+  if (lookup.errorKey) {
+    lookup.status = null;
+    renderPhone();
+    elements.phoneInput.focus();
+    return;
+  }
+
+  Object.assign(lookup, { status: 'loading', number, result: null, openRows: new Set(['ftc', 'web']) });
+  renderPhone();
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), PHONE_TIMEOUT_MS);
+  let errorKey = null;
+  let result = null;
+
+  try {
+    const response = await fetch(lookupUrl(), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ number, lang: state.lang }),
+      signal: controller.signal,
+    });
+    if (response.status === 400) errorKey = 'phone.invalid';
+    else if (response.status === 429 || response.status === 503) errorKey = 'ai.busy';
+    else if (!response.ok) errorKey = 'phone.error';
+    else result = await response.json();
+  } catch {
+    errorKey = navigator.onLine === false ? 'ai.offline' : 'phone.error';
+  } finally {
+    clearTimeout(timer);
+  }
+
+  // The visitor cleared the box or started another lookup while this one ran.
+  if (lookup.status !== 'loading' || lookup.number !== number) return;
+
+  Object.assign(lookup, { status: result ? 'done' : null, result, errorKey });
+  const shown = renderPhone();
+  if (!shown) return;
+
+  elements.phoneAnnouncer.textContent = `${shown.verdictText}. ${shown.summaryText}`;
+  effects.revealResult(elements.phoneResult);
+  elements.phoneResult.focus({ preventScroll: true });
+  scrollPageTo(elements.phoneResult);
+}
+
+function clearPhone() {
+  Object.assign(lookup, { status: null, number: null, result: null, errorKey: null });
+  elements.phoneInput.value = '';
+  elements.phoneAnnouncer.textContent = '';
+  stopReading();
+  renderPhone();
+  elements.phoneInput.focus();
 }
 
 function check() {
@@ -462,12 +722,21 @@ function check() {
   elements.error.hidden = true;
   elements.pasteError.hidden = true;
   state.checkedText = text;
-  state.ai = null;
+  // With the AI turned on, every message is double-checked automatically.
+  state.ai = config.aiEndpoint ? { status: 'loading' } : null;
   state.openRows = new Set();
   stopReading();
 
   effects.scan(elements.field);
   renderResult(text);
+  if (config.aiEndpoint) {
+    askAi({ render: false });
+    // This check is being counted by the Worker right now.
+    if (checkedCount !== null) {
+      checkedCount++;
+      renderCheckedCount();
+    }
+  }
 
   elements.result.tabIndex = -1;
   elements.result.focus({ preventScroll: true });
@@ -547,6 +816,28 @@ function renderStats() {
   const { messagesTested, catchRate } = config.stats;
   setStat('stat-tested', messagesTested === null ? null : String(messagesTested));
   setStat('stat-catch', catchRate === null ? null : `${Math.round(catchRate)}%`);
+  renderCheckedCount();
+}
+
+// The live count takes the place of the "100%" card once there is something
+// to show. Until then, and whenever the Worker can't be reached, that card stays.
+function renderCheckedCount() {
+  const show = checkedCount !== null && checkedCount > 0;
+  document.getElementById('stat-checked-card').hidden = !show;
+  document.getElementById('stat-private-card').hidden = show;
+  if (show) document.getElementById('stat-checked').textContent = new Intl.NumberFormat(state.lang).format(checkedCount);
+}
+
+async function loadCheckedCount() {
+  try {
+    const response = await fetch(`${config.aiEndpoint.replace(/\/+$/, '')}/stats`);
+    if (!response.ok) return;
+    const { checks } = await response.json();
+    if (Number.isInteger(checks)) checkedCount = checks;
+    renderCheckedCount();
+  } catch {
+    // The page works the same without the number.
+  }
 }
 
 function setStat(id, value) {
@@ -693,6 +984,24 @@ function init() {
     saveSetting(TEXT_SIZE_KEY, large ? 'large' : 'normal');
   });
   elements.footerFlag.addEventListener('click', () => effects.waveFlag(elements.flagWave));
+
+  // The lookup needs the Worker, and with the AI on, the lock icon by the
+  // message box would promise more privacy than the page gives.
+  const online = Boolean(config.aiEndpoint);
+  if (online) loadCheckedCount();
+  elements.phoneSection.hidden = !online;
+  elements.phoneLink.hidden = !online;
+  document.querySelector('.privacy-lock').toggleAttribute('hidden', online);
+  document.querySelector('.privacy-info').toggleAttribute('hidden', !online);
+  elements.phoneForm.addEventListener('submit', (event) => {
+    event.preventDefault();
+    lookUpNumber();
+  });
+  elements.phoneInput.addEventListener('input', () => {
+    if (!lookup.errorKey) return;
+    lookup.errorKey = null;
+    elements.phoneError.hidden = true;
+  });
 
   document.getElementById('year').textContent = String(new Date().getFullYear());
   setUpLanguageMenu();

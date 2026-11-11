@@ -13,6 +13,9 @@ export default [
         'trading platform',
         'investment opportunity',
         'passive income',
+        '\\d+x (any|your|all) (bitcoin|crypto|btc|eth)',
+        'we(\'ll| will) send (you )?back',
+        'crypto(currency)? (promotion|giveaway|fundraising)',
       ],
       uk: [
         'гарантован~ (дохід|прибут~|дохідн~)',
@@ -38,6 +41,23 @@ export default [
         'oportunidad de inversión',
         'ingresos pasivos',
       ],
+    },
+  },
+  {
+    // "Hey is this John? We met on Tinder" starts a long romance or
+    // investment scam with a stranger who "texted the wrong number".
+    id: 'romance.wrong_number',
+    category: 'investment-romance',
+    severity: 'medium',
+    weight: 25,
+    patterns: {
+      en: [
+        'we (chatted|talked|matched|met) on (tinder|facebook|instagram|whatsapp|bumble|hinge|linkedin)',
+        'sorry,? (wrong number|i think i have the wrong number)',
+      ],
+      uk: ['ми спілкувал~ (в|у) (тіндері|фейсбуці|інстаграмі)'],
+      ru: ['мы общал~ (в|на) (тиндере|фейсбуке|инстаграме)'],
+      es: ['hablamos (en|por) (tinder|facebook|instagram)'],
     },
   },
   {

@@ -4,11 +4,37 @@ compatibility_date = "2026-10-01"
 
 [vars]
 # Pages allowed to call this Worker, comma separated.
-ALLOWED_ORIGINS = "https://fojikulul.github.io,http://localhost:8080,http://127.0.0.1:8080"
-# Leave empty for the default model. claude-haiku-5-5 is much cheaper.
+ALLOWED_ORIGINS = "https://red-flag-vasyl3.vercel.app,https://fojikulul.github.io,http://localhost:8080,http://127.0.0.1:8080"
+# "gemini" (default) or "claude" for the message double-check. Phone
+# lookups always use Gemini, because it can search the web.
+AI_PROVIDER = "gemini"
+# Leave empty for the default Gemini model.
+GEMINI_MODEL = ""
+# Only used when AI_PROVIDER is "claude". Leave empty for the default model.
 MODEL = ""
+# FTC pages (50 reports each) imported per scheduled run.
+FTC_PAGES_PER_RUN = "10"
 
+# Ten message checks a minute per visitor.
 [[ratelimits]]
 name = "RATE_LIMITER"
 namespace_id = "1001"
 simple = { limit = 10, period = 60 }
+
+# Three phone lookups a minute per visitor; each one is a paid web search.
+[[ratelimits]]
+name = "LOOKUP_LIMITER"
+namespace_id = "1002"
+simple = { limit = 3, period = 60 }
+
+# The copy of the FTC reports. Create it with
+#   npx wrangler d1 create redflag-reports
+# and paste the id it prints here.
+[[d1_databases]]
+binding = "REPORTS"
+database_name = "redflag-reports"
+database_id = "00000000-0000-0000-0000-000000000000"
+
+# Every 20 minutes, import the next batch of FTC reports.
+[triggers]
+crons = ["*/20 * * * *"]

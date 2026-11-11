@@ -719,6 +719,10 @@ textarea {
   font-weight: 700;
 }
 
+.hero-tool .tool-privacy:has(.privacy-lock[hidden]) {
+  align-items: flex-start;
+}
+
 .tool-privacy svg {
   flex: none;
   width: 20px;
@@ -779,6 +783,12 @@ textarea {
   color: var(--verdict-green-ink);
 }
 
+/* A phone number nobody has reported. Neutral on purpose: it isn't "safe". */
+.verdict-unknown {
+  background: var(--surface-raised);
+  border-bottom: 1px solid var(--line-strong);
+}
+
 .verdict-title {
   font-size: clamp(1.7rem, 4vw, 2.2rem);
   font-weight: 800;
@@ -796,6 +806,21 @@ textarea {
   font-size: 0.95rem;
   font-weight: 700;
   opacity: 0.9;
+}
+
+/* What the AI double-check did to the verdict. */
+.verdict-ai {
+  margin-top: 10px;
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.verdict .ai-loading::before {
+  width: 18px;
+  height: 18px;
+  border-color: currentColor;
+  border-top-color: transparent;
+  opacity: 0.8;
 }
 
 .result-body {
@@ -1113,6 +1138,11 @@ mark {
   color: var(--verdict-green-ink);
 }
 
+.ai-verdict-unknown {
+  background: var(--surface-raised);
+  border: 1px solid var(--line-strong);
+}
+
 .ai-panel .ai-explanation {
   color: var(--ink);
   font-size: 1.05rem;
@@ -1121,6 +1151,91 @@ mark {
 .ai-panel .ai-advice {
   color: var(--ink);
   font-weight: 700;
+}
+
+/* Phone number lookup */
+
+.phone-tool {
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.phone-input {
+  display: block;
+  width: 100%;
+  min-height: 64px;
+  padding: 14px 18px;
+  background: var(--bg);
+  border: 2px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  color: var(--ink);
+  font: inherit;
+  font-size: 1.4rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.phone-input::placeholder {
+  color: #908980;
+  font-weight: 500;
+}
+
+.phone-input:focus {
+  outline: none;
+  border-color: var(--accent-ink);
+}
+
+.phone-tool .tool-privacy {
+  align-items: flex-start;
+}
+
+.phone-tool .tool-privacy svg {
+  margin-top: 4px;
+}
+
+.phone-tool .btn:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+.phone-loading {
+  padding: 22px clamp(18px, 3vw, 28px);
+}
+
+.phone-panel {
+  display: grid;
+  gap: 12px;
+}
+
+.phone-strong {
+  font-size: 1.1rem;
+  font-weight: 800;
+}
+
+.phone-fine {
+  font-size: 0.95rem;
+  color: var(--muted);
+}
+
+.phone-sources {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding-left: 1.2em;
+}
+
+.phone-sources a {
+  color: var(--accent-ink);
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.phone-suggestions {
+  width: 100%;
+  height: 64px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  color-scheme: light;
 }
 
 /* What it catches */

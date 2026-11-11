@@ -74,6 +74,8 @@ export default [
         'log ?in (here|now|to (verify|confirm|restore|unlock|avoid))',
         'click (here|the link|below|this link) to (verify|confirm|update|restore|unlock|claim|get|receive|log ?in|sign in|reactivate)',
         'update your (payment|billing|account|delivery|shipping) (method|information|details|address)',
+        'sign (in|into) (to )?your account _ (review|confirm|process|verify|receive|restore)',
+        'scan (the|this) qr code',
       ],
       uk: [
         '(підтверді~|онові~|вкажі~|введі~|надішл~|повідом~) (свої |ваші )?(дані|паспортн~ дан~|номер картки|дані картки|пароль|пін-код|cvv|реквізит~|особист~ дан~|платіжн~ дан~)',

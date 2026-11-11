@@ -30,5 +30,13 @@
   {"id": "en-s14", "lang": "en", "expected": "green", "source": "example", "notes": "everyday request", "text": "Your bank statement is ready to view in the app."},
   {"id": "uk-s06", "lang": "uk", "expected": "green", "source": "example", "notes": "everyday request", "text": "Надішли мені рецепт борщу"},
   {"id": "ru-s06", "lang": "ru", "expected": "green", "source": "example", "notes": "everyday request", "text": "Мама, пришли фото"},
-  {"id": "es-s06", "lang": "es", "expected": "green", "source": "example", "notes": "everyday request", "text": "Mándame la dirección de la fiesta"}
+  {"id": "es-s06", "lang": "es", "expected": "green", "source": "example", "notes": "everyday request", "text": "Mándame la dirección de la fiesta"},
+  {"id": "en-s15", "lang": "en", "expected": "green", "source": "example", "notes": "regression: looked like a new rule", "text": "Hi, is this Sarah's mom? It's Jenny from school, about the carpool."},
+  {"id": "en-s16", "lang": "en", "expected": "green", "source": "example", "notes": "regression: looked like a new rule", "text": "Please vote for Prop 1 on Tuesday!"},
+  {"id": "en-s17", "lang": "en", "expected": "green", "source": "example", "notes": "regression: looked like a new rule", "text": "Your DMV appointment is confirmed for Monday at 9am."},
+  {"id": "en-s18", "lang": "en", "expected": "green", "source": "example", "notes": "regression: looked like a new rule", "text": "Sorry I have to bail on dinner tonight, feeling sick."},
+  {"id": "en-s19", "lang": "en", "expected": "green", "source": "example", "notes": "regression: looked like a new rule", "text": "You can check your social security account online at ssa.gov."},
+  {"id": "en-s20", "lang": "en", "expected": "green", "source": "example", "notes": "regression: looked like a new rule", "text": "Your Netflix subscription has been renewed. Thanks for watching!"},
+  {"id": "en-s21", "lang": "en", "expected": "green", "source": "example", "notes": "regression: looked like a new rule", "text": "Order #XK5LM has shipped."},
+  {"id": "en-s22", "lang": "en", "expected": "green", "source": "example", "notes": "regression: looked like a new rule", "text": "Call us at 555-201-3344 to reschedule your dental cleaning."}
 ]

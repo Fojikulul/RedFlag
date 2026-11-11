@@ -1,12 +1,15 @@
 {
   "name": "redflag-ai",
   "version": "1.0.0",
-  "description": "Cloudflare Worker that gives RedFlag an optional AI second opinion.",
+  "description": "Cloudflare Worker that gives RedFlag an AI double-check and a phone number lookup.",
   "private": true,
   "type": "module",
   "license": "MIT",
   "scripts": {
-    "dev": "wrangler dev --port 8787",
+    "dev": "wrangler dev --port 8787 --test-scheduled",
+    "db:init": "wrangler d1 execute redflag-reports --local --file=schema.sql",
+    "db:init:remote": "wrangler d1 execute redflag-reports --remote --file=schema.sql",
+    "counts": "wrangler d1 execute redflag-reports --remote --command \"SELECT day, kind, count FROM daily_counts ORDER BY day\"",
     "deploy": "wrangler deploy"
   },
   "dependencies": {

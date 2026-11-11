@@ -1,5 +1,19 @@
 export default [
   {
+    // "Vote for my friend's daughter" links usually steal the account used
+    // to log in and vote.
+    id: 'prize.contest_vote',
+    category: 'prize',
+    severity: 'medium',
+    weight: 25,
+    patterns: {
+      en: ['(please )?vote for (\\p{L}+ )?in (this|the|a) (contest|competition)'],
+      uk: ['проголосуй~ за'],
+      ru: ['проголосуй~ за'],
+      es: ['vot(a|e|en) por (\\p{L}+ )?en (este|el|un) concurso'],
+    },
+  },
+  {
     id: 'prize.winner',
     category: 'prize',
     severity: 'high',
@@ -8,7 +22,14 @@ export default [
       en: [
         'you(\'ve| have)? (won|been selected|been chosen)',
         'you(\'re| are) (our|the|a) (lucky )?winner',
-        'lottery',
+        'lottery\\p{L}*',
+        'lucky winners?',
+        '(selected|chosen) as (one of )?(the |our )?(lucky )?winners?',
+        'donation fund',
+        'donate _ through you',
+        'unclaimed prize',
+        '(points|rewards|reward points) (are )?(about to |will |going to )?expire',
+        'redeem (your )?points',
         'sweepstakes',
         'jackpot',
         'claim (your )?(prize|reward|gift|winnings|refund|money)',
