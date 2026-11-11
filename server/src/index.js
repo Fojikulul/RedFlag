@@ -2,11 +2,13 @@
 //
 // API keys live here as Worker secrets and never reach the browser.
 // Messages and phone numbers are used for the one request and are never
-// logged or stored.
+// logged or stored. The only thing kept is a daily count of how many checks
+// and lookups happened.
 
 import Anthropic from '@anthropic-ai/sdk';
 
 import { InputError, parseInput, secondOpinion } from './check.js';
+import { countUse, readCounts } from './counts.js';
 import { importReports } from './ftc-import.js';
 import {
   buildCheckRequest, buildPhoneRequest, callGemini, GeminiError, readCheckResponse, readPhoneResponse,
@@ -18,7 +20,7 @@ function corsHeaders(origin, env) {
   if (!allowed.includes(origin)) return null;
   return {
     'Access-Control-Allow-Origin': origin,
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type',
     'Access-Control-Max-Age': '86400',
     Vary: 'Origin',
@@ -59,14 +61,26 @@ async function searchWeb(input, env) {
 }
 
 export default {
-  async fetch(request, env) {
+  async fetch(request, env, ctx) {
     const cors = corsHeaders(request.headers.get('Origin') ?? '', env);
     if (!cors) return json(403, { error: 'origin_not_allowed' });
 
     if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors });
-    if (request.method !== 'POST') return json(405, { error: 'method_not_allowed' }, cors);
 
     const { pathname } = new URL(request.url);
+
+    // The page shows how many messages have been checked. Counts only.
+    if (request.method === 'GET' && pathname === '/stats') {
+      if (!env.REPORTS) return json(404, { error: 'not_found' }, cors);
+      try {
+        return json(200, await readCounts(env.REPORTS), { ...cors, 'Cache-Control': 'public, max-age=60' });
+      } catch (error) {
+        console.error('stats failed:', error?.name);
+        return json(502, { error: 'upstream_failed' }, cors);
+      }
+    }
+    if (request.method !== 'POST') return json(405, { error: 'method_not_allowed' }, cors);
+
     const lookup = pathname === '/lookup';
     if (!lookup && pathname !== '/' && pathname !== '/check') return json(404, { error: 'not_found' }, cors);
 
@@ -83,20 +97,31 @@ export default {
       return json(400, { error: 'invalid_json' }, cors);
     }
 
+    // Counting must never break or slow down an answer. A second try at the
+    // same message is not a new check.
+    const counted = () => {
+      if (body?.retry === true) return;
+      ctx.waitUntil(countUse(env.REPORTS, lookup ? 'lookup' : 'check').catch(() => {}));
+    };
+
     try {
       if (lookup) {
         const result = await lookupPhone(body, {
           db: env.REPORTS,
           searchWeb: env.GEMINI_API_KEY ? (input) => searchWeb(input, env) : null,
         });
+        counted();
         return json(200, result, cors);
       }
 
       const opinion = await checkMessage(body, env);
+      counted();
       if (!opinion) return json(502, { error: 'no_opinion' }, cors);
       return json(200, opinion, cors);
     } catch (error) {
       if (error instanceof InputError) return json(400, { error: 'invalid_input', message: error.message }, cors);
+      // The AI failing doesn't undo the check: the rules still ran on the device.
+      counted();
       if (isBusy(error)) return json(503, { error: 'busy' }, cors);
       // Log the kind of failure only, never what the person sent.
       console.error('request failed:', error?.status ?? error?.name);

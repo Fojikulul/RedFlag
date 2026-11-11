@@ -17,3 +17,12 @@ CREATE TABLE IF NOT EXISTS import_progress (
   next_offset INTEGER NOT NULL DEFAULT 0,
   done INTEGER NOT NULL DEFAULT 0
 );
+
+-- How many message checks and phone lookups happened each day. Only the
+-- count is kept, never what was checked or who checked it.
+CREATE TABLE IF NOT EXISTS daily_counts (
+  day TEXT NOT NULL,
+  kind TEXT NOT NULL,
+  count INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (day, kind)
+);
