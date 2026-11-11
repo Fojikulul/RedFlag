@@ -86,7 +86,12 @@ export function readResponse(response) {
     return null;
   }
 
-  if (!['red', 'yellow', 'green'].includes(parsed.verdict)) return null;
+  return normalizeOpinion(parsed);
+}
+
+/** Checks a parsed opinion from any provider and keeps only known fields. */
+export function normalizeOpinion(parsed) {
+  if (!parsed || !['red', 'yellow', 'green'].includes(parsed.verdict)) return null;
   return {
     verdict: parsed.verdict,
     tactics: Array.isArray(parsed.tactics) ? parsed.tactics.filter((t) => CATEGORIES.includes(t)) : [],

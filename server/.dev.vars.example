@@ -1,3 +1,13 @@
-# Copy this file to .dev.vars and put your real key in it. .dev.vars is
-# ignored by git, so the key never ends up in the repository.
-ANTHROPIC_API_KEY=your-key-here
+# Copy this file to .dev.vars and put your real keys in it. .dev.vars is
+# ignored by git, so the keys never end up in the repository.
+
+# From Google AI Studio (aistudio.google.com). Used for the message
+# double-check and the phone number web search.
+GEMINI_API_KEY=your-key-here
+
+# Free from api.data.gov/signup. Used to import FTC Do Not Call reports.
+# DEMO_KEY works for a quick local test but allows very few requests.
+FTC_API_KEY=DEMO_KEY
+
+# Only needed if AI_PROVIDER is "claude" in wrangler.toml.
+# ANTHROPIC_API_KEY=your-key-here
