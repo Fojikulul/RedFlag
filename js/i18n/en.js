@@ -4,6 +4,7 @@ export default {
 
   'nav.skip': 'Skip to the checker',
   'nav.check': 'Check a message',
+  'nav.checkNumber': 'Check a number',
   'nav.language': 'Language',
   'nav.localTime': 'Your time',
 

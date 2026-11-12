@@ -4,6 +4,7 @@ export default {
 
   'nav.skip': 'Перейти к проверке',
   'nav.check': 'Проверить сообщение',
+  'nav.checkNumber': 'Проверить номер',
   'nav.language': 'Язык',
   'nav.localTime': 'Ваше время',
 
