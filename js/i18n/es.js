@@ -4,6 +4,7 @@ export default {
 
   'nav.skip': 'Ir al verificador',
   'nav.check': 'Revisar un mensaje',
+  'nav.checkNumber': 'Revisar un número',
   'nav.language': 'Idioma',
   'nav.localTime': 'Su hora',
 

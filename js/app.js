@@ -61,6 +61,7 @@ const elements = {
   flagWave: document.getElementById('flag-wave'),
   phoneSection: document.getElementById('phone'),
   phoneLink: document.getElementById('phone-link'),
+  headerNumber: document.getElementById('header-number'),
   phoneForm: document.getElementById('phone-form'),
   phoneButton: document.getElementById('phone-button'),
   phoneInput: document.getElementById('phone-number'),
@@ -731,6 +732,11 @@ function clear() {
   focusMessage();
 }
 
+function focusNumber() {
+  elements.phoneInput.focus({ preventScroll: true });
+  scrollPageTo(elements.phoneSection);
+}
+
 function focusMessage() {
   elements.message.focus({ preventScroll: true });
   scrollPageTo(document.getElementById('checker'));
@@ -919,11 +925,18 @@ function setUpLinks() {
     ? `mailto:${config.contactEmail}?subject=${encodeURIComponent('RedFlag workshop')}`
     : `${config.repoUrl}/issues`;
 
-  // "Check a message" should land the cursor in the box, not just near it.
+  // "Check a message" and "Check a number" should land the cursor in the
+  // box, not just near it.
   for (const link of document.querySelectorAll('.focus-message')) {
     link.addEventListener('click', (event) => {
       event.preventDefault();
       focusMessage();
+    });
+  }
+  for (const link of document.querySelectorAll('.focus-number')) {
+    link.addEventListener('click', (event) => {
+      event.preventDefault();
+      focusNumber();
     });
   }
 }
@@ -961,6 +974,7 @@ function init() {
   // The phone lookup needs the Worker.
   elements.phoneSection.hidden = !config.lookupEndpoint;
   elements.phoneLink.hidden = !config.lookupEndpoint;
+  elements.headerNumber.hidden = !config.lookupEndpoint;
   elements.phoneForm.addEventListener('submit', (event) => {
     event.preventDefault();
     lookUpNumber();

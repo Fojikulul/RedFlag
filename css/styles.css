@@ -287,6 +287,14 @@ textarea {
 @media (min-width: 820px) {
   .header-cta {
     display: inline-flex;
+    white-space: nowrap;
+  }
+}
+
+/* The second button only where both fit in every language. */
+@media (max-width: 1099px) {
+  .header-cta.focus-number {
+    display: none;
   }
 }
 
