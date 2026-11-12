@@ -42,11 +42,10 @@ function scan() {
   for (let ring = 1; ring <= 6; ring++) {
     parts.push(shape('circle', { cx: CENTER, cy: CENTER, r: ring * 13, class: 'art-dotted', 'data-part': 'ring' }));
   }
-  // Motion turns SVG parts around the middle of their own bounding box, so an
-  // invisible twin below the center keeps that middle on the radar's center.
-  const sweep = shape('g', { 'data-part': 'sweep' });
-  sweep.append(shape('line', { x1: CENTER, y1: CENTER, x2: CENTER, y2: CENTER - 80, class: 'art-accent' }));
-  sweep.append(shape('line', { x1: CENTER, y1: CENTER, x2: CENTER, y2: CENTER + 80, stroke: 'none' }));
+  // The beam stops short of the outer ring (r 78). It is turned with an SVG
+  // rotate() that names the center, so it can't swing off the radar.
+  const sweep = shape('g', { 'data-part': 'sweep', 'data-cx': CENTER, 'data-cy': CENTER });
+  sweep.append(shape('line', { x1: CENTER, y1: CENTER, x2: CENTER, y2: CENTER - 72, class: 'art-accent' }));
   parts.push(sweep);
   parts.push(shape('circle', { cx: CENTER + 34, cy: CENTER - 40, r: 6, class: 'art-dot', 'data-part': 'blip' }));
   return svg(parts);

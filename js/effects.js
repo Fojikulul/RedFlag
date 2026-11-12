@@ -172,6 +172,28 @@ export async function setUpCounters() {
 // SVG elements to transform-box: fill-box, so a pivot given in drawing
 // coordinates would land somewhere else; parts that turn around the drawing's
 // center are built to be centered on it instead (see art.js).
+// Turns an SVG group once around a fixed point with its transform attribute.
+// CSS transform-origin on SVG differs between browsers and Motion overrides
+// it, so the beam on the radar sometimes swung off the circle.
+function spin(node, { delay = 0, duration = 1 } = {}) {
+  const cx = node.dataset.cx;
+  const cy = node.dataset.cy;
+  const ease = (t) => (t < 0.5 ? 2 * t * t : 1 - (-2 * t + 2) ** 2 / 2);
+  return new Promise((resolve) => {
+    const start = performance.now() + delay * 1000;
+    const frame = (now) => {
+      const t = Math.min(1, Math.max(0, (now - start) / (duration * 1000)));
+      node.setAttribute('transform', `rotate(${360 * ease(t)} ${cx} ${cy})`);
+      if (t < 1) requestAnimationFrame(frame);
+      else {
+        node.removeAttribute('transform');
+        resolve();
+      }
+    };
+    requestAnimationFrame(frame);
+  });
+}
+
 function pinTransform(nodes) {
   for (const node of nodes) {
     node.style.transformBox = 'fill-box';
@@ -189,11 +211,10 @@ const STEP_ANIMATIONS = {
     const sweep = art.querySelectorAll('[data-part="sweep"]');
     const blip = art.querySelectorAll('[data-part="blip"]');
     pinTransform(rings);
-    pinTransform(sweep);
     pinTransform(blip);
     return [
       enter(rings, { opacity: [0, 1], scale: [0.4, 1] }, { delay: motion.stagger(0.08), duration: 0.4, ease: EASE }),
-      enter(sweep, { rotate: [0, 360] }, { delay: 0.4, duration: 1.3, ease: 'easeInOut' }),
+      ...[...sweep].map((node) => spin(node, { delay: 0.4, duration: 1.3 })),
       enter(blip, { opacity: [0, 1], scale: [0, 1.6, 1] }, { delay: 1.55, duration: 0.45, ease: EASE }),
     ];
   },

@@ -27,7 +27,7 @@ function corsHeaders(request, env) {
   if (origin !== new URL(request.url).origin && !allowed.includes(origin)) return null;
   return {
     'Access-Control-Allow-Origin': origin,
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type',
     'Access-Control-Max-Age': '86400',
     Vary: 'Origin',
@@ -127,9 +127,11 @@ async function lookup(request, env, ctx) {
   }
 }
 
-async function stats(env) {
-  if (!env.DB) return json(404, { error: 'no_stats' });
-  const response = json(200, await usageSummary(env.DB));
+async function stats(request, env) {
+  // A copy of the site hosted elsewhere (Vercel) reads the count too.
+  const cors = corsHeaders(request, env) ?? {};
+  if (!env.DB) return json(404, { error: 'no_stats' }, cors);
+  const response = json(200, await usageSummary(env.DB), cors);
   // Counts can be a few minutes old; this keeps the database reads low.
   response.headers.set('Cache-Control', 'public, max-age=300');
   return response;
@@ -140,7 +142,7 @@ export default {
     const { pathname } = new URL(request.url);
     if (pathname === API_PATH) return check(request, env, ctx);
     if (pathname === LOOKUP_PATH) return lookup(request, env, ctx);
-    if (pathname === STATS_PATH && request.method === 'GET') return stats(env);
+    if (pathname === STATS_PATH && request.method === 'GET') return stats(request, env);
     // Anything else that isn't a file of the site.
     if (env.ASSETS) return env.ASSETS.fetch(request);
     return new Response('Not found', { status: 404 });
