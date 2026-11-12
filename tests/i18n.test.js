@@ -80,7 +80,6 @@ test('everything the phone lookup can show is translated', () => {
   const keys = [
     ...SUBJECT_SLUGS.map((slug) => `phone.subject.${slug}`),
     ...['red', 'reported', 'yellow', 'unknown'].flatMap((verdict) => [`phone.verdict.${verdict}`, `phone.summary.${verdict}`]),
-    ...['agree', 'raised', 'lowered', 'failed'].map((change) => `ai.note.${change}`),
   ];
   for (const { code } of LANGUAGES) {
     for (const key of keys) assert.ok(key in STRINGS[code], `${code} is missing ${key}`);

@@ -121,6 +121,9 @@ export default [
         'fraud (department|team|prevention|unit)',
         '(bank|account) security (team|department)',
         'security department of (your|the) bank',
+        // Fakes often sign as a made-up "YourBank" instead of a real name.
+        'your bank (security|alerts?|fraud)',
+        'bank (fraud|security) alerts?',
       ],
       uk: ['служб~ безпеки (\\p{L}*банк~|банка)', 'фінансов~ моніторинг~'],
       ru: ['служб~ безопасности (\\p{L}*банк~)?', 'финансов~ мониторинг~'],

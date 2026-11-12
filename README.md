@@ -2,11 +2,13 @@
 
 RedFlag is a free scam checker. Paste a suspicious text, email or link and it tells you, in plain words, whether it looks like a scam, which parts gave it away, and what to do next. It works in **English, Ukrainian, Russian and Spanish**.
 
-It's built for the people scammers target most: older adults and immigrant families who may not be confident with technology or English. The rules run in your browser. On its own, the site uploads nothing. If you turn on the optional AI Worker, messages are also double-checked by an AI and visitors can look up phone numbers; the page tells them plainly what gets sent and where.
+It's built for the people scammers target most: older adults and immigrant families who may not be confident with technology or English. Every message is checked twice, by rules in your browser and by an AI on a small server, and nothing you paste is stored or shared.
 
 ## How it works
 
-RedFlag uses transparent rules, not machine learning. Each rule looks for one tactic scammers rely on:
+Two checks run on every message at the same time.
+
+**Rules, in the browser.** Each rule looks for one tactic scammers rely on:
 
 - **Urgency and threats**: deadlines, locked accounts, threats of arrest or deportation
 - **Strange payments**: gift cards, crypto, wire transfers, couriers collecting cash, "small fees"
@@ -15,17 +17,32 @@ RedFlag uses transparent rules, not machine learning. Each rule looks for one ta
 - **Suspicious links**: shorteners, look-alike domains (`paypa1.com`), punycode, raw IP addresses
 - **Secrecy, prizes, too-good jobs and investment promises**
 
-Each hit adds to a score. Tactics that scammers stack together, like urgency plus a payment request, add a bonus. The score becomes a verdict: **red** (likely a scam), **yellow** (be careful) or **green** (no common signs found). RedFlag can be wrong, and the page says so.
+Each hit adds to a score. Tactics that scammers stack together, like urgency plus a payment request, add a bonus. The score becomes a verdict: **red** (likely a scam), **yellow** (be careful) or **green** (no common signs found).
+
+**An AI, on the server.** The message also goes to `/api/check`, a Cloudflare Worker that asks an AI model for a verdict, a 0-100 score, a plain explanation and one next step, in the page's language.
+
+The AI leads: its verdict and explanation are what the visitor sees first, and both scores are shown. The rules keep it honest. A scam can tell the AI it is harmless, but it can't talk the rules out of what they see, so when the rules say red the answer is never green (`js/combine.js`). If the AI can't be reached, the rules answer alone and the page says so. RedFlag can be wrong, and the page says that too.
 
 ## Running it
 
-It's a static site with no build step.
+The site itself is static, with no build step:
 
 ```bash
 python -m http.server 8080
 ```
 
-Then open http://localhost:8080. Any static file server works.
+Then open http://localhost:8080. Any static file server works. Without the Worker, the AI check is unavailable and the rules answer alone.
+
+To run the whole thing, site and AI, the way it runs online:
+
+```bash
+cd server
+npm install
+npx wrangler login
+npm run dev
+```
+
+Then open http://localhost:8787. Workers AI always runs on Cloudflare, even in development, so it needs the login.
 
 ## Tests and accuracy
 
@@ -69,86 +86,51 @@ Real scam messages are the most useful thing anyone can contribute. Add them to 
 
 **Remove personal details first.** Replace names, phone numbers, emails, addresses and account numbers with placeholders like `[NAME]` and `[PHONE]`.
 
-## AI double-check and phone lookup (optional)
+## Hosting on Cloudflare (site and AI)
 
-Both need the small Cloudflare Worker in `server/`. They switch on when `aiEndpoint` is set in `js/config.js`, and the page's privacy wording changes with them. Leave `aiEndpoint` empty and the site stays rules-only: nothing leaves the device.
-
-### AI double-check
-
-The rules catch common scams but can miss new wording. With the Worker on, every message that is checked is also sent to Google's Gemini API, and the two answers are combined (`js/engine/combine.js`):
-
-- If they agree, the verdict stands.
-- If the AI is **more** worried, the AI's verdict is used.
-- If the AI is **less** worried, the warning drops **one step only** (red to yellow, yellow to green), and everything the rules found stays on screen. The AI alone can never turn a red into green.
-- If the AI can't answer, the rules verdict is shown and the page says so.
-
-### Phone number lookup
-
-A visitor types a number that called or texted them. The Worker answers from two places:
-
-1. **FTC reports.** The FTC publishes the Do Not Call complaints people file, but its API can't be searched by phone number. So the Worker copies the reports into a Cloudflare D1 database on a schedule, and lookups read that copy. The numbers people look up are never sent to the FTC.
-2. **A web search.** Gemini searches Google for the number and sums up what it finds, with links to the pages it read.
-
-The answer is **red**, **yellow** (some reports) or **grey** (no reports found). Red reads "Reported as a scam" only when the web search found scam reports; when it rests on FTC reports alone it reads "Reported many times", because those reports are about unwanted calls, not proven scams. There is no green: finding nothing doesn't make a number safe, and the page says that.
-
-### Counting use
-
-The Worker keeps one number per day for message checks and one for phone lookups, in the `daily_counts` table. Nothing else about a check is stored: no text, no phone number, no result, no address. A second try at the same message isn't counted twice. Days are in UTC.
-
-The total appears on the site as **Messages checked**. For the day-by-day numbers:
-
-```bash
-cd server
-npm run counts
-```
-
-`GET /stats` on the Worker returns the totals and the last 30 days as JSON. Checks are only counted while `aiEndpoint` is set, because without the Worker a check never leaves the device and there is nothing to count it.
-
-### Keys
-
-All keys live on the Worker as secrets. None is in the page, the repo or the browser.
-
-| Secret | Where to get it | Used for |
-| --- | --- | --- |
-| `GEMINI_API_KEY` | [Google AI Studio](https://aistudio.google.com) | Message double-check and web search |
-| `FTC_API_KEY` | [api.data.gov/signup](https://api.data.gov/signup/) (free) | Importing FTC reports |
-
-Two things to know about the Gemini key:
-
-- **Web search needs billing turned on.** Google doesn't offer search on the free tier. Without it the message double-check still works and phone lookups use FTC reports only; the page says the web search wasn't available.
-- **On the free tier, Google may use what is sent to improve its products.** On the paid tier it doesn't. The page and `privacy.html` are worded for the free tier. If you turn billing on, soften that wording.
-
-### Running it locally
+One Cloudflare Worker in `server/` serves the whole site and the AI check. `server/wrangler.toml` publishes the repository root as the site, minus what `.assetsignore` lists (the server code, tests, scripts and marketing files).
 
 ```bash
 cd server
 npm install
-cp .dev.vars.example .dev.vars   # then put your keys in .dev.vars (git ignores it)
-npm run db:init                  # creates the local report tables
-npm run dev                      # Worker on http://localhost:8787
-```
-
-Set `aiEndpoint: 'http://localhost:8787'` in `js/config.js` and serve the site on port 8080. To pull some FTC reports into the local database, run the import by hand while the Worker is running:
-
-```bash
-curl "http://localhost:8787/__scheduled?cron=*/20+*+*+*+*"
-```
-
-### Deploying
-
-```bash
-npx wrangler d1 create redflag-reports   # paste the id it prints into wrangler.toml
-npm run db:init:remote
-npx wrangler secret put GEMINI_API_KEY
-npx wrangler secret put FTC_API_KEY
+npx wrangler login
 npm run deploy
 ```
 
-Then set `aiEndpoint` to the deployed URL and add your site to `ALLOWED_ORIGINS` in `server/wrangler.toml`. The import runs every 20 minutes and fills in the last two weeks first, so the database takes a few days to catch up; reports older than a year are dropped.
+The site is then live at `https://redflag.<your-account>.workers.dev`. A custom domain can be added in the Cloudflare dashboard.
 
-The Worker only answers requests from the allowed origins, allows 10 message checks and 3 phone lookups a minute per visitor, and never logs or stores message text or phone numbers; it keeps only a daily count. Set a spending limit in Google AI Studio as well.
+**Cost.** By default the AI is Cloudflare Workers AI (`AI_PROVIDER = "workers-ai"`), with `@cf/google/gemma-4-26b-a4b-it`. On the Workers Free plan it includes 10,000 Neurons a day, roughly 1,000 checks depending on message length (a short message used about 8 Neurons in testing), and when they run out it stops until midnight UTC instead of billing. RedFlag then answers with its rules alone. Stay on the Free plan and it can't cost anything. (On Workers Paid, extra use is billed, so set a budget alert there.) Each visitor can run 10 checks a minute.
 
-To use the Claude API for the message double-check instead, set `AI_PROVIDER = "claude"` in `wrangler.toml` and add an `ANTHROPIC_API_KEY` secret. Phone lookups always use Gemini, because it can search the web. The wording on the page names Google, so change the `ai.text`, `tool.privacyAi` and `faq.1.aAi` strings and `privacy.html` if you switch.
+`MODEL` in `wrangler.toml` picks another Workers AI model. Pick one that is available on the Free plan and handles all four languages.
+
+**Claude instead.** Set `AI_PROVIDER = "claude"` and add the key with `npx wrangler secret put ANTHROPIC_API_KEY`. It is paid per check (`claude-haiku-5-5` by default), so set a monthly spending limit in the Anthropic Console.
+
+**Hosting the site elsewhere** (Vercel or GitHub Pages, for example): `js/config.js` already sends those copies to the Worker's full address (`WORKER` at the top of the file). Add the site's address to `ALLOWED_ORIGINS` in `wrangler.toml`; `https://redflag-sable.vercel.app` is already there. The Worker's own pages are always allowed.
+
+## Phone number lookup
+
+A visitor types a number that called or texted them and presses **Look it up**. The Worker answers from two places:
+
+1. **FTC reports.** The FTC publishes the Do Not Call complaints people file, but its API can't be searched by phone number. So the Worker copies the reports into the same D1 database on a schedule (every 20 minutes, the last two weeks first), and lookups read that copy. The numbers people look up are never sent to the FTC. Reports older than a year are dropped.
+2. **A web search (optional).** With a `GEMINI_API_KEY` secret, Gemini searches Google for the number and sums up what it finds, with links to the pages it read. Google offers search only on a paid Gemini key (the first 5,000 searches a month are free). Without the key, lookups use the FTC reports alone and say so.
+
+The answer is **red**, **yellow** (a few reports) or **grey** (no reports found). There is no green: finding nothing doesn't make a number safe, and the page says that. Red reads "Reported as a scam" only when the web search found scam reports; when it rests on FTC reports alone it reads "Reported many times", because those reports are about unwanted calls, not proven scams.
+
+Setup, once:
+
+```bash
+cd server
+npm run db:init:remote                  # adds the report tables to the existing database
+npx wrangler secret put FTC_API_KEY     # free from api.data.gov/signup
+npx wrangler secret put GEMINI_API_KEY  # optional, for the web search
+npm run deploy
+```
+
+To try it locally, copy `server/.dev.vars.example` to `server/.dev.vars`, run `npm run db:init` and `npm run dev`, open http://localhost:8787, and pull in some reports with `curl "http://localhost:8787/__scheduled?cron=*/20+*+*+*+*"`.
+
+Each visitor can run 3 lookups a minute. Lookups are counted per day like checks, with nothing about the number.
+
+API keys live only on the Worker. They are never in the page, the repo or the browser, and the Worker never logs message text.
 
 ## Partnering with a sheriff's office or police department
 
@@ -160,9 +142,9 @@ Set `localAgency` in `js/config.js` to a name and non-emergency phone number, an
 
 ## Privacy
 
-- With `aiEndpoint` empty, messages are checked in the browser and nothing is sent anywhere.
-- With the Worker on, each checked message also goes through the Worker to Google's Gemini API, and the line under the Check button says so. A phone number is sent only when the visitor presses **Look it up**.
-- The Worker never logs or stores messages or phone numbers. Its database holds a copy of public FTC reports and a daily count of checks and lookups, nothing else.
+- Each message is checked by the rules in the browser and sent once to the Worker for the AI check. The Worker doesn't store or log it, and Cloudflare says Workers AI doesn't train on it.
+- A phone number is sent only when the visitor presses **Look it up**. The Worker doesn't store or log it. With the optional web search on, the number also goes to Google's Gemini API.
+- The Worker keeps a daily count of checks and lookups, and a copy of public FTC reports. Nothing about any visitor.
 - The only things stored are the language and text-size settings, in `localStorage`.
 - Fonts and the animation library are served from this site, not from third parties.
 - There is a spot in `index.html` for one privacy-friendly page-view counter. Nothing else is tracked.

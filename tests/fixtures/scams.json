@@ -58,5 +58,6 @@
   {"id": "es-012", "lang": "es", "expected": "red", "source": "example", "notes": "todo tu dinero", "text": "Mándame todo tu dinero"},
   {"id": "es-013", "lang": "es", "expected": "red", "source": "example", "notes": "dinero urgente", "text": "Necesito que me mandes dinero urgente"},
   {"id": "es-014", "lang": "es", "expected": "yellow", "source": "example", "notes": "contraseña", "text": "Dame la contraseña de tu banco"},
-  {"id": "en-020", "lang": "en", "expected": "yellow", "source": "example", "notes": "it is me, spelled out", "text": "Hi grandma, it is me. I got a new phone."}
+  {"id": "en-020", "lang": "en", "expected": "yellow", "source": "example", "notes": "it is me, spelled out", "text": "Hi grandma, it is me. I got a new phone."},
+  {"id": "en-021", "lang": "en", "expected": "red", "source": "community", "notes": "Fake bank fraud alert with reply YES/NO", "text": "YourBank Security: Did you authorize the following activity for your Online ID me**** at 11:22 AM ET, 1/30?\nSign in to Online Banking.\nLocation:\nBirmingham,AL,United States\nIf you authorized the activity, Reply YES; if not, reply NO.\nTo opt out of fraud text Alerts, reply STOP"}
 ]

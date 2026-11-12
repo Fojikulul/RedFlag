@@ -160,9 +160,13 @@ export function mergeSpans(flags) {
 }
 
 function adviceFor(verdict, flags) {
+  return adviceForCategories(verdict, new Set(flags.map((flag) => flag.category)));
+}
+
+/** The steps to take for a verdict, given which tactics were seen. */
+export function adviceForCategories(verdict, categories) {
   if (verdict === 'green') return ['advice.stay_careful'];
 
-  const categories = new Set(flags.map((flag) => flag.category));
   const keys = [];
   for (const [category, key] of ADVICE_BY_CATEGORY) {
     if (categories.has(category) && !keys.includes(key)) keys.push(key);
